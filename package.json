@@ -1,5 +1,5 @@
 {
-  "name": "terrastate",
+	"name": "terrastate",
 	"displayName": "terrastate",
 	"description": "",
 	"version": "0.0.1",
@@ -10,16 +10,27 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:terrastate.helloWorld"
+		"onView:terrastate.terrastate"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
-		"commands": [
-			{
-				"command": "terrastate.helloWorld",
-				"title": "Hello World"
-			}
-		]
+		"views": {
+			"terrastate": [
+				{
+					"id": "terrastate.terrastate",
+					"name": "Terrastate"
+				}
+			]
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "terrastate",
+					"title": "Terrastate",
+					"icon": "media/terraform.svg"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "yarn run package",
