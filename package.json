@@ -1,8 +1,21 @@
 {
 	"name": "terrastate",
-	"displayName": "terrastate",
+	"publisher": "rohinivsenthil",
+	"displayName": "Terrastate",
+	"icon": "media/terraform.png",
 	"description": "",
 	"version": "0.0.1",
+	"bugs": {
+		"url": "https://github.com/rohinivsenthil/postcode/issues"
+	},
+	"author": {
+		"name": "Rohini Senthil",
+		"email": "rohinivsenthil@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/rohinivsenthil/postcode"
+	},
 	"engines": {
 		"vscode": "^1.58.0"
 	},
