@@ -9,7 +9,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<vscode.TreeIt
     private tfstateFiles: vscode.Uri[] = [];
 
     constructor() {
-        console.log("hello")
+        console.log("hello");
 
         vscode.workspace.findFiles(TFSTATE_GLOB).then(files => {
             this.tfstateFiles = files;
@@ -35,10 +35,10 @@ export class TerrastateProvider implements vscode.TreeDataProvider<vscode.TreeIt
     getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
         if (element) {
             // TODO: Find and return resources inside tfstate file 
-            return []
+            return [];
         }
 
-        return this.tfstateFiles.map(uri => new vscode.TreeItem(uri))
+        return this.tfstateFiles.map(uri => new vscode.TreeItem(uri));
     }
 
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
