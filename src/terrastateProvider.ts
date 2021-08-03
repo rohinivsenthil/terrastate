@@ -1,47 +1,62 @@
 import * as vscode from 'vscode';
+import { promises as fs } from 'fs';
 
 const TFSTATE_GLOB = "**/terraform.tfstate";
 
-export class TerrastateProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+class Item extends vscode.TreeItem {
+    tfStateFile: vscode.Uri;
+    resource?: string;
 
-    private tfstateFiles: vscode.Uri[] = [];
+    constructor(tfstateFile: vscode.Uri, resource?: string) {
+        super(
+            resource || tfstateFile.path,
+            resource ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded
+        )
+
+        this.tfStateFile = tfstateFile;
+        this.resource = resource;
+    }
+}
+
+export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
+    private _onDidChangeTreeData: vscode.EventEmitter<Item | undefined | null | void> = new vscode.EventEmitter<Item | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<Item | undefined | null | void> = this._onDidChangeTreeData.event;
+
+    private rootItems: Item[] = [];
 
     constructor() {
-        console.log("hello");
-
         vscode.workspace.findFiles(TFSTATE_GLOB).then(files => {
-            this.tfstateFiles = files;
+            this.rootItems = files.map(uri => new Item(uri));
             this._onDidChangeTreeData.fire();
 
             const fsWatcher = vscode.workspace.createFileSystemWatcher(TFSTATE_GLOB, false, false, false);
 
             fsWatcher.onDidCreate(created => {
-                this.tfstateFiles.push(created);
+                this.rootItems.push(new Item(created));
                 this._onDidChangeTreeData.fire();
             });
 
             fsWatcher.onDidDelete(deleted => {
-                this.tfstateFiles = this.tfstateFiles.filter(uri => uri.toString() !== deleted.toString());
-                this._onDidChangeTreeData.fire();
+               this.rootItems = this.rootItems.filter(item => item.tfStateFile.path !== deleted.path);
+               this._onDidChangeTreeData.fire();
             });
 
-            // TODO: Handle on change events
-            // fsWatcher.onDidChange(console.log)
+            fsWatcher.onDidChange(changed => {
+                this._onDidChangeTreeData.fire(this.rootItems.filter(item => item.tfStateFile.path === changed.path)[0]);
+            });
         });
     }
 
-    getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
+    async getChildren(element?: Item): Promise<Item[]> {
         if (element) {
-            // TODO: Find and return resources inside tfstate file 
-            return [];
+            const data = JSON.parse((await fs.readFile(element.tfStateFile.fsPath)).toString());
+            return data.resources.map(({ name }: { name: string }) => new Item(data.tfStateFile, name));
         }
 
-        return this.tfstateFiles.map(uri => new vscode.TreeItem(uri));
+        return this.rootItems;
     }
 
-    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+    getTreeItem(element: Item): vscode.TreeItem {
         return element;
     }
 }
