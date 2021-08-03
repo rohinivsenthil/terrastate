@@ -13,11 +13,14 @@ class Item extends vscode.TreeItem {
 
         switch (type) {
             case "directory":
-                this.label = tfstateFile ? vscode.workspace.asRelativePath(tfstateFile.path) : '';
+                this.label = tfstateFile ? vscode.workspace.asRelativePath(tfstateFile.path).slice(0, -18) : '';
+                this.description = '/terraform.tfstate';
                 this.iconPath = path.join(__filename, '..', '..', 'media', 'terraform.svg'); 
                 break;
             case "resource":
-                this.label = resource;
+                const resourceName = resource?.split(' ') ?? ['', ''];
+                this.label = resourceName[1];
+                this.description = resourceName[0];
                 this.iconPath = new vscode.ThemeIcon("debug-start");
                 break;
             case "none":
@@ -69,7 +72,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
             const items = data.resources.map(
                 ({ type, name }: { type: string, name: string }) => new Item({
                     type: 'resource',
-                    resource: `${type}.${name}`
+                    resource: `${type} ${name}`
                 })
             );
 
