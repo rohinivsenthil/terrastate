@@ -43,6 +43,34 @@
 					"icon": "media/terraform.svg"
 				}
 			]
+		},
+		"commands": [
+			{
+				"command": "terrastate.refresh",
+				"title": "Refresh",
+				"icon": "$(timeline-refresh)"
+			},
+			{
+				"command": "terrastate.apply",
+				"title": "Apply",
+				"icon": "$(cloud-upload)"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "terrastate.refresh",
+					"when": "view == terrastate.terrastate",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "terrastate.refresh",
+					"when": "view == terrastate.terrastate && viewItem == directory",
+					"group": "inline"
+				}
+			]
 		}
 	},
 	"scripts": {

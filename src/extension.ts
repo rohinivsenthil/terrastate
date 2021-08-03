@@ -8,6 +8,12 @@ import { TerrastateProvider } from './terrastateProvider';
 export async function activate(context: vscode.ExtensionContext) {
 	const terrastateProvider = new TerrastateProvider();
 	vscode.window.registerTreeDataProvider('terrastate.terrastate', terrastateProvider);
+	vscode.commands.registerCommand('terrastate.refresh', () =>
+	terrastateProvider.refresh()
+  );
+	vscode.commands.registerCommand('terrastate.apply', () =>
+	terrastateProvider.refresh()
+  );
 }
 
 // this method is called when your extension is deactivated
