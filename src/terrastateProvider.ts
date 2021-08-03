@@ -1,22 +1,34 @@
 import * as vscode from 'vscode';
 import { promises as fs } from 'fs';
+import * as path from 'path';
 
 const TFSTATE_GLOB = "**/terraform.tfstate";
 
 class Item extends vscode.TreeItem {
-    tfStateFile: vscode.Uri;
+    tfstateFile?: vscode.Uri;
     resource?: string;
 
-    constructor(tfstateFile: vscode.Uri, resource?: string) {
-        super(
-            resource || tfstateFile.path,
-            resource ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded
-        );
+    constructor({ type, tfstateFile, resource }: { type: string, tfstateFile?: vscode.Uri, resource?: string  }) {
+        super('', type === "directory" ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None);
 
-        this.tfStateFile = tfstateFile;
+        switch (type) {
+            case "directory":
+                this.label = tfstateFile ? tfstateFile.path : '';
+                this.iconPath = path.join(__filename, '..', '..', 'media', 'terraform.svg'); 
+                break;
+            case "resource":
+                this.label = resource;
+                this.iconPath = new vscode.ThemeIcon("debug-start");
+                break;
+            case "none":
+                this.description = '(No resources deployed)';
+                break;
+            default:
+                throw new Error(`Invalid type ${type}`);
+        }
+
+        this.tfstateFile = tfstateFile;
         this.resource = resource;
-
-        this.iconPath = resource ? new vscode.ThemeIcon("debug-start") : undefined; 
     }
 
 }
@@ -29,31 +41,38 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
 
     constructor() {
         vscode.workspace.findFiles(TFSTATE_GLOB).then(files => {
-            this.rootItems = files.map(uri => new Item(uri));
+            this.rootItems = files.map(uri => new Item({type: 'directory', tfstateFile: uri}));
             this._onDidChangeTreeData.fire();
 
             const fsWatcher = vscode.workspace.createFileSystemWatcher(TFSTATE_GLOB, false, false, false);
 
             fsWatcher.onDidCreate(created => {
-                this.rootItems.push(new Item(created));
+                this.rootItems.push(new Item({ type: 'directory', tfstateFile: created }));
                 this._onDidChangeTreeData.fire();
             });
 
             fsWatcher.onDidDelete(deleted => {
-               this.rootItems = this.rootItems.filter(item => item.tfStateFile.path !== deleted.path);
+               this.rootItems = this.rootItems.filter(({ tfstateFile }) => tfstateFile?.path !== deleted.path);
                this._onDidChangeTreeData.fire();
             });
 
             fsWatcher.onDidChange(changed => {
-                this._onDidChangeTreeData.fire(this.rootItems.filter(item => item.tfStateFile.path === changed.path)[0]);
+                this._onDidChangeTreeData.fire(this.rootItems.filter(({ tfstateFile }) => tfstateFile?.path === changed.path)[0]);
             });
         });
     }
 
     async getChildren(element?: Item): Promise<Item[]> {
-        if (element) {
-            const data = JSON.parse((await fs.readFile(element.tfStateFile.fsPath)).toString());
-            return data.resources.map(({ type, name }: { type:string, name: string }) => new Item(data.tfStateFile, `${type}.${name}`));
+        if (element?.tfstateFile) {
+            const data = JSON.parse((await fs.readFile(element.tfstateFile.fsPath)).toString());
+            const items = data.resources.map(
+                ({ type, name }: { type: string, name: string }) => new Item({
+                    type: 'resource',
+                    resource: `${type}.${name}`
+                })
+            );
+
+            return items.length ? items : [new Item({ type: "none" })];
         }
 
         return this.rootItems;
