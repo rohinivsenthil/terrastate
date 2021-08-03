@@ -13,7 +13,7 @@ class Item extends vscode.TreeItem {
 
         switch (type) {
             case "directory":
-                this.label = tfstateFile ? tfstateFile.path : '';
+                this.label = tfstateFile ? vscode.workspace.asRelativePath(tfstateFile.path) : '';
                 this.iconPath = path.join(__filename, '..', '..', 'media', 'terraform.svg'); 
                 break;
             case "resource":
@@ -41,6 +41,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
 
     constructor() {
         vscode.workspace.findFiles(TFSTATE_GLOB).then(files => {
+            console.log(files);
             this.rootItems = files.map(uri => new Item({type: 'directory', tfstateFile: uri}));
             this._onDidChangeTreeData.fire();
 
