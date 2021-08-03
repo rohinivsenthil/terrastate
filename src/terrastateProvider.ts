@@ -11,11 +11,14 @@ class Item extends vscode.TreeItem {
         super(
             resource || tfstateFile.path,
             resource ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded
-        )
+        );
 
         this.tfStateFile = tfstateFile;
         this.resource = resource;
+
+        this.iconPath = resource ? new vscode.ThemeIcon("debug-start") : undefined; 
     }
+
 }
 
 export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
@@ -50,7 +53,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     async getChildren(element?: Item): Promise<Item[]> {
         if (element) {
             const data = JSON.parse((await fs.readFile(element.tfStateFile.fsPath)).toString());
-            return data.resources.map(({ name }: { name: string }) => new Item(data.tfStateFile, name));
+            return data.resources.map(({ type, name }: { type:string, name: string }) => new Item(data.tfStateFile, `${type}.${name}`));
         }
 
         return this.rootItems;
