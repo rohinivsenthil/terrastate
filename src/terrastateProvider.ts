@@ -39,8 +39,8 @@ class Item extends vscode.TreeItem {
         this.iconPath = path.join(__filename, "../../media/terraform.svg");
         break;
       case "resource":
-        this.label = resource.name;
-        this.description = resource.type;
+        this.label = resource?.name;
+        this.description = resource?.type;
         this.iconPath = new vscode.ThemeIcon("debug-start");
         break;
       case "none":
@@ -138,7 +138,27 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     return element;
   }
 
-  refresh(): null {
-    return null;
-  }
+    refresh(): null {
+        return null;
+    }
+
+    apply(): null {
+        return null;
+    }
+
+    detsroy(): null {
+        return null;
+    }
+
+    taint(): null {
+        return null;
+    }
+
+    untaint(): null {
+        return null;
+    }
+
+    sync(): null {
+        return null;
+    }
 }
