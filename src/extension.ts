@@ -10,6 +10,9 @@ export async function activate(
     "terrastate.terrastate",
     terrastateProvider
   );
+  vscode.commands.registerCommand('terrastate.refresh', () =>
+	terrastateProvider.refresh()
+  );
 	vscode.commands.registerCommand('terrastate.apply', () =>
 	terrastateProvider.apply()
   );

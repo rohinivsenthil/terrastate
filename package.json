@@ -60,7 +60,7 @@
 				"title": "Apply"
 			},
 			{
-				"command": "terrastate.destory",
+				"command": "terrastate.destroy",
 				"title": "Destroy",
 				"icon": "$(stop-circle)"
 			},
@@ -92,7 +92,7 @@
 					"when": "view == terrastate.terrastate && viewItem == resource"
 				},
 				{
-					"command": "terrastate.destory",
+					"command": "terrastate.destroy",
 					"when": "view == terrastate.terrastate && viewItem == resource",
 					"group": "inline"
 				},
