@@ -101,17 +101,8 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
       );
     });
 
-    setInterval(() => {
-      vscode.workspace.findFiles(TFSTATE_GLOB).then((files) => {
-        this.rootItems = files.map(
-          (uri) => new Item({ type: "directory", tfstateFile: uri })
-        );
-        this.rootItems.sort((a, b) =>
-          (a.label || "") > (b.label || "") ? 1 : -1
-        );
-        this._onDidChangeTreeData.fire();
-      });
-    }, 1000);
+    this.sync();
+    setInterval(() => this.sync(), 1000);
   }
 
   async getChildren(element?: Item): Promise<Item[]> {
@@ -138,27 +129,40 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     return element;
   }
 
-    refresh(): null {
-        return null;
-    }
+  refresh(): null {
+    return null;
+  }
 
-    apply(): null {
-        return null;
-    }
+  apply(): null {
+    return null;
+  }
 
-    detsroy(): null {
-        return null;
-    }
+  detsroy(): null {
+    return null;
+  }
 
-    taint(): null {
-        return null;
-    }
+  taint(): null {
+    return null;
+  }
 
-    untaint(): null {
-        return null;
-    }
+  untaint(): null {
+    return null;
+  }
 
-    sync(): null {
-        return null;
+  async sync(): Promise<void> {
+    const newItems = (await vscode.workspace.findFiles(TFSTATE_GLOB))
+      .map((uri) => new Item({ type: "directory", tfstateFile: uri }))
+      .sort((a, b) => ((a.label || "") > (b.label || "") ? 1 : -1));
+
+    if (
+      newItems.length !== this.rootItems.length ||
+      newItems.some(
+        (item, idx) =>
+          item.tfstateFile?.fsPath !== this.rootItems[idx].tfstateFile?.fsPath
+      )
+    ) {
+      this.rootItems = newItems;
+      this._onDidChangeTreeData.fire();
     }
+  }
 }

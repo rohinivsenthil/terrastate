@@ -26,87 +26,87 @@
     "onView:terrastate.terrastate"
   ],
   "main": "./dist/extension.js",
-	"contributes": {
-		"views": {
-			"terrastate": [
-				{
-					"id": "terrastate.terrastate",
-					"name": "Terrastate"
-				}
-			]
-		},
-		"viewsContainers": {
-			"activitybar": [
-				{
-					"id": "terrastate",
-					"title": "Terrastate",
-					"icon": "media/terraform.svg"
-				}
-			]
-		},
-		"commands": [
-			{
-				"command": "terrastate.sync",
-				"title": "Sync",
-				"icon": "$(settings-sync-view-icon)"
-			},
-			{
-				"command": "terrastate.refresh",
-				"title": "Refresh",
-				"icon": "$(timeline-refresh)"
-			},
-			{
-				"command": "terrastate.apply",
-				"title": "Apply"
-			},
-			{
-				"command": "terrastate.destroy",
-				"title": "Destroy",
-				"icon": "$(stop-circle)"
-			},
-			{
-				"command": "terrastate.taint",
-				"title": "Taint"
-			},
-			{
-				"command": "terrastate.untaint",
-				"title": "Untaint"
-			}
-		],
-		"menus": {
-			"view/title": [
-				{
-					"command": "terrastate.sync",
-					"when": "view == terrastate.terrastate",
-					"group": "navigation"
-				}
-			],
-			"view/item/context": [
-				{
-					"command": "terrastate.refresh",
-					"when": "view == terrastate.terrastate && viewItem == directory",
-					"group": "inline"
-				},
-				{
-					"command": "terrastate.apply",
-					"when": "view == terrastate.terrastate && viewItem == resource"
-				},
-				{
-					"command": "terrastate.destroy",
-					"when": "view == terrastate.terrastate && viewItem == resource",
-					"group": "inline"
-				},
-				{
-					"command": "terrastate.taint",
-					"when": "view == terrastate.terrastate && viewItem == resource"
-				},
-				{
-					"command": "terrastate.untaint",
-					"when": "view == terrastate.terrastate && viewItem == resource"
-				}
-			]
-		}
-	},
+  "contributes": {
+    "views": {
+      "terrastate": [
+        {
+          "id": "terrastate.terrastate",
+          "name": "Terrastate"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "terrastate",
+          "title": "Terrastate",
+          "icon": "media/terraform.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "terrastate.sync",
+        "title": "Sync",
+        "icon": "$(settings-sync-view-icon)"
+      },
+      {
+        "command": "terrastate.refresh",
+        "title": "Refresh",
+        "icon": "$(timeline-refresh)"
+      },
+      {
+        "command": "terrastate.apply",
+        "title": "Apply"
+      },
+      {
+        "command": "terrastate.destroy",
+        "title": "Destroy",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "terrastate.taint",
+        "title": "Taint"
+      },
+      {
+        "command": "terrastate.untaint",
+        "title": "Untaint"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "terrastate.sync",
+          "when": "view == terrastate.terrastate",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "terrastate.refresh",
+          "when": "view == terrastate.terrastate && viewItem == directory",
+          "group": "inline"
+        },
+        {
+          "command": "terrastate.apply",
+          "when": "view == terrastate.terrastate && viewItem == resource"
+        },
+        {
+          "command": "terrastate.destroy",
+          "when": "view == terrastate.terrastate && viewItem == resource",
+          "group": "inline"
+        },
+        {
+          "command": "terrastate.taint",
+          "when": "view == terrastate.terrastate && viewItem == resource"
+        },
+        {
+          "command": "terrastate.untaint",
+          "when": "view == terrastate.terrastate && viewItem == resource"
+        }
+      ]
+    }
+  },
   "scripts": {
     "vscode:prepublish": "yarn run package",
     "compile": "webpack",
