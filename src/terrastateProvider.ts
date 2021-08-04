@@ -55,7 +55,7 @@ class Item extends vscode.TreeItem {
         this.iconPath = tainted
           ? new vscode.ThemeIcon(
               "debug-alt",
-              new vscode.ThemeColor("charts.yellow")
+              new vscode.ThemeColor("list.warningForeground")
             )
           : new vscode.ThemeIcon("debug-start");
         break;
