@@ -13,8 +13,8 @@ class Item extends vscode.TreeItem {
 
         switch (type) {
             case "directory":
-                this.label = tfstateFile ? path.dirname(vscode.workspace.asRelativePath(tfstateFile.path)) : '';
-                this.iconPath = path.join(__filename, '..', '..', 'media', 'terraform.svg'); 
+                this.label = tfstateFile ? path.dirname(vscode.workspace.asRelativePath(tfstateFile.path, true)) : '';
+                this.iconPath = path.join(__filename, '../../media/terraform.svg'); 
                 break;
             case "resource":
                 this.label = resource.name;
