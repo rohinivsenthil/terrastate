@@ -17,7 +17,7 @@ export async function activate(
     terrastateProvider.apply()
   );
   vscode.commands.registerCommand("terrastate.destroy", () =>
-    terrastateProvider.detsroy()
+    terrastateProvider.destroy()
   );
   vscode.commands.registerCommand("terrastate.taint", () =>
     terrastateProvider.taint()

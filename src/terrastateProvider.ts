@@ -7,6 +7,8 @@ const TF_GLOB = "**/{*.tf,terraform.tfstate}";
 type Resource = {
   name: string;
   type: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  instances: any[];
 };
 
 class Item extends vscode.TreeItem {
@@ -29,6 +31,7 @@ class Item extends vscode.TreeItem {
         : vscode.TreeItemCollapsibleState.None
     );
 
+    let tainted;
     switch (type) {
       case "directory":
         this.label = path.dirname(
@@ -43,9 +46,18 @@ class Item extends vscode.TreeItem {
         );
         break;
       case "resource":
+        tainted = resource?.instances.some(
+          (instance) => instance.status === "tainted"
+        );
         this.label = resource?.name;
         this.description = resource?.type;
-        this.iconPath = new vscode.ThemeIcon("debug-start");
+        this.tooltip = tainted ? "Tainted" : "Deployed";
+        this.iconPath = tainted
+          ? new vscode.ThemeIcon(
+              "debug-alt",
+              new vscode.ThemeColor("charts.yellow")
+            )
+          : new vscode.ThemeIcon("debug-start");
         break;
       case "none":
         this.description = "(No resources deployed)";
