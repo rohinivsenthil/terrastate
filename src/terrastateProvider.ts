@@ -1,14 +1,10 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { promises as fsPromises } from "fs";
+import { watch } from "chokidar";
+import { Resource, getResources, getDeployedResources } from "./terraform";
+import { readdir, promises as fsPromises } from "fs";
 
 const TF_GLOB = "**/{*.tf,terraform.tfstate}";
-
-type Resource = {
-  name: string;
-  type: string;
-  instances: { status?: string }[];
-};
 
 export class TerrastateItem extends vscode.TreeItem {
   directory?: string;
@@ -30,7 +26,6 @@ export class TerrastateItem extends vscode.TreeItem {
         : vscode.TreeItemCollapsibleState.None
     );
 
-    let tainted;
     switch (type) {
       case "directory":
         this.label = path.dirname(
@@ -45,13 +40,10 @@ export class TerrastateItem extends vscode.TreeItem {
         );
         break;
       case "resource":
-        tainted = resource?.instances.some(
-          (instance) => instance.status === "tainted"
-        );
         this.label = resource?.name;
         this.description = resource?.type;
-        this.tooltip = tainted ? "Tainted" : "Deployed";
-        this.iconPath = tainted
+        this.tooltip = resource?.tainted ? "Tainted" : "Deployed";
+        this.iconPath = resource?.tainted
           ? new vscode.ThemeIcon(
               "debug-alt",
               new vscode.ThemeColor("list.warningForeground")
@@ -62,7 +54,7 @@ export class TerrastateItem extends vscode.TreeItem {
         this.description = "(No resources deployed)";
         break;
       case "error":
-        this.description = "(Failed to load tfstate)";
+        this.description = "(Failed to load resources)";
         break;
       default:
         throw new Error(`Invalid type ${type}`);
@@ -85,50 +77,86 @@ export class TerrastateProvider
   private rootItems: TerrastateItem[] = [];
 
   constructor() {
-    this.sync().then(() => {
-      const fsWatcher = vscode.workspace.createFileSystemWatcher(
-        TF_GLOB,
-        true,
-        false,
-        true
-      );
+    (vscode.workspace.workspaceFolders || []).forEach(({ uri }) => {
+      const watcher = watch(path.join(uri.path, TF_GLOB));
 
-      fsWatcher.onDidChange((changed) =>
-        this._onDidChangeTreeData.fire(
-          this.rootItems.filter(
-            (item) => item.directory === path.dirname(changed.path)
-          )[0]
-        )
-      );
-
-      setInterval(() => this.sync(), 1000);
+      watcher
+        .on("unlink", (unlinked) => {
+          const directory = path.dirname(unlinked);
+          readdir(directory, (err, files) => {
+            if (
+              err ||
+              !files.some((file) => /(.*\.tf|terraform\.tfstate)$/.test(file))
+            ) {
+              this.rootItems = this.rootItems.filter(
+                (item) => item.directory !== directory
+              );
+              this._onDidChangeTreeData.fire();
+            } else {
+              this._onDidChangeTreeData.fire(
+                this.rootItems.filter((item) => item.directory === directory)[0]
+              );
+            }
+          });
+        })
+        .on("change", (changed) => {
+          const directory = path.dirname(changed);
+          const item = this.rootItems.filter(
+            (item) => item.directory === directory
+          )[0];
+          this._onDidChangeTreeData.fire(item);
+        })
+        .on("add", (added) => {
+          const directory = path.dirname(added);
+          const item = this.rootItems.filter(
+            (item) => item.directory === directory
+          )[0];
+          if (item) {
+            this._onDidChangeTreeData.fire(item);
+          } else {
+            this.rootItems.push(
+              new TerrastateItem({ type: "directory", directory })
+            );
+            this._onDidChangeTreeData.fire();
+          }
+        });
     });
+
+    setInterval(async () => {
+      const exists = await Promise.all(
+        this.rootItems.map(async (item) => {
+          try {
+            await fsPromises.access(item.directory ?? "");
+            return true;
+          } catch {
+            return false;
+          }
+        })
+      );
+
+      this.rootItems = this.rootItems.filter((_, idx) => exists[idx]);
+    }, 1000);
   }
 
   async getChildren(element?: TerrastateItem): Promise<TerrastateItem[]> {
     if (element?.directory) {
+      console.log(element.directory);
+
       try {
-        const tfstateFile = path.join(element.directory, "terraform.tfstate");
-        const tfstate = JSON.parse(
-          (await fsPromises.readFile(tfstateFile)).toString()
+        const deployedResources = await getDeployedResources(element.directory);
+        const dormantResources = (await getResources(element.directory)).filter(
+          (i) => deployedResources?.every(({ address }) => address !== i)
         );
 
-        const items = tfstate.resources.map(
-          (resource: Resource) =>
-            new TerrastateItem({
-              type: "resource",
-              resource,
-              directory: element.directory,
-            })
-        );
+        const items: TerrastateItem[] = [
+          ...deployedResources.map(
+            (resource) => new TerrastateItem({ type: "resource", resource })
+          ),
+        ];
 
         return items.length ? items : [new TerrastateItem({ type: "none" })];
       } catch (err) {
-        if (err.message.startsWith("ENOENT")) {
-          return [new TerrastateItem({ type: "none" })];
-        } else {
-          return [new TerrastateItem({ type: "error" })];
-        }
+        return [new TerrastateItem({ type: "error" })];
       }
     }
 
@@ -157,20 +185,7 @@ export class TerrastateProvider
 
   untaint(item: TerrastateItem): void {}
 
-  async sync(): Promise<void> {
-    const files = await vscode.workspace.findFiles(TF_GLOB);
-    const dirs = [
-      ...new Set(files.map((uri) => path.dirname(uri.path))),
-    ].sort();
-
-    if (
-      dirs.length !== this.rootItems.length ||
-      dirs.some((dir, idx) => dir !== this.rootItems[idx].directory)
-    ) {
-      this.rootItems = dirs.map(
-        (directory) => new TerrastateItem({ type: "directory", directory })
-      );
-      this._onDidChangeTreeData.fire();
-    }
+  sync(): void {
+    this._onDidChangeTreeData.fire();
   }
 }
