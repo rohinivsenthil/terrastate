@@ -94,11 +94,11 @@
         },
         {
           "command": "terrastate.apply",
-          "when": "view == terrastate.terrastate && viewItem == resource"
+          "when": "view == terrastate.terrastate && viewItem =~ /^resource|directory$/"
         },
         {
           "command": "terrastate.destroy",
-          "when": "view == terrastate.terrastate && viewItem == resource"
+          "when": "view == terrastate.terrastate && viewItem =~ /^resource|directory$/"
         },
         {
           "command": "terrastate.taint",
@@ -120,7 +120,7 @@
     "test-watch": "tsc -watch -p ./",
     "pretest": "yarn run test-compile && yarn run lint",
     "lint": "eslint src --ext ts",
-    "lint:fix": "eslint --fix src --ext ts && prettier --write .",
+    "lint:fix": "eslint --fix src --ext ts; prettier --write .",
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {

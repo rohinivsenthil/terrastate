@@ -115,7 +115,11 @@ export class TerrastateProvider
 
         const items = tfstate.resources.map(
           (resource: Resource) =>
-            new TerrastateItem({ type: "resource", resource: resource })
+            new TerrastateItem({
+              type: "resource",
+              resource,
+              directory: element.directory,
+            })
         );
 
         return items.length ? items : [new TerrastateItem({ type: "none" })];
@@ -135,20 +139,23 @@ export class TerrastateProvider
     return element;
   }
 
-  refresh(item: TerrastateItem): void {
-  }
+  refresh(item: TerrastateItem): void {}
 
-  apply(item: TerrastateItem): void {
-  }
+  apply(item: TerrastateItem): void {}
 
   destroy(item: TerrastateItem): void {
+    if (item.contextValue === "directory") {
+      console.log("terraform destroy");
+    } else if (item.contextValue === "resource") {
+      console.log(
+        `terraform destroy -target=${item.resource?.type}.${item.resource?.name}`
+      );
+    }
   }
 
-  taint(item: TerrastateItem): void {
-  }
+  taint(item: TerrastateItem): void {}
 
-  untaint(item: TerrastateItem): void {
-  }
+  untaint(item: TerrastateItem): void {}
 
   async sync(): Promise<void> {
     const files = await vscode.workspace.findFiles(TF_GLOB);

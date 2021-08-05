@@ -12,21 +12,29 @@ export async function activate(
     terrastateProvider
   );
 
-  vscode.commands.registerCommand("terrastate.refresh", (item: TerrastateItem) =>
-    terrastateProvider.refresh(item)
+  vscode.commands.registerCommand(
+    "terrastate.refresh",
+    (item: TerrastateItem) => terrastateProvider.refresh(item)
   );
+
   vscode.commands.registerCommand("terrastate.apply", (item: TerrastateItem) =>
     terrastateProvider.apply(item)
   );
-  vscode.commands.registerCommand("terrastate.destroy", (item: TerrastateItem) =>
-    terrastateProvider.destroy(item)
+
+  vscode.commands.registerCommand(
+    "terrastate.destroy",
+    (item: TerrastateItem) => terrastateProvider.destroy(item)
   );
+
   vscode.commands.registerCommand("terrastate.taint", (item: TerrastateItem) =>
     terrastateProvider.taint(item)
   );
-  vscode.commands.registerCommand("terrastate.untaint", (item: TerrastateItem) =>
-    terrastateProvider.untaint(item)
+
+  vscode.commands.registerCommand(
+    "terrastate.untaint",
+    (item: TerrastateItem) => terrastateProvider.untaint(item)
   );
+
   vscode.commands.registerCommand("terrastate.sync", () =>
     terrastateProvider.sync()
   );
