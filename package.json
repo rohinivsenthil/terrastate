@@ -83,6 +83,11 @@
       ],
       "view/item/context": [
         {
+          "command": "terrastate.destroy",
+          "when": "view == terrastate.terrastate && viewItem == resource",
+          "group": "inline"
+        },
+        {
           "command": "terrastate.refresh",
           "when": "view == terrastate.terrastate && viewItem == directory",
           "group": "inline"
@@ -93,8 +98,7 @@
         },
         {
           "command": "terrastate.destroy",
-          "when": "view == terrastate.terrastate && viewItem == resource",
-          "group": "inline"
+          "when": "view == terrastate.terrastate && viewItem == resource"
         },
         {
           "command": "terrastate.taint",

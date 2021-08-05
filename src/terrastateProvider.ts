@@ -7,11 +7,10 @@ const TF_GLOB = "**/{*.tf,terraform.tfstate}";
 type Resource = {
   name: string;
   type: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  instances: any[];
+  instances: { status?: string }[];
 };
 
-class Item extends vscode.TreeItem {
+export class TerrastateItem extends vscode.TreeItem {
   directory?: string;
   resource?: Resource;
 
@@ -75,13 +74,15 @@ class Item extends vscode.TreeItem {
   }
 }
 
-export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
-  private _onDidChangeTreeData: vscode.EventEmitter<Item | void> =
-    new vscode.EventEmitter<Item | void>();
-  readonly onDidChangeTreeData: vscode.Event<Item | void> =
+export class TerrastateProvider
+  implements vscode.TreeDataProvider<TerrastateItem>
+{
+  private _onDidChangeTreeData: vscode.EventEmitter<TerrastateItem | void> =
+    new vscode.EventEmitter<TerrastateItem | void>();
+  readonly onDidChangeTreeData: vscode.Event<TerrastateItem | void> =
     this._onDidChangeTreeData.event;
 
-  private rootItems: Item[] = [];
+  private rootItems: TerrastateItem[] = [];
 
   constructor() {
     this.sync().then(() => {
@@ -104,7 +105,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     });
   }
 
-  async getChildren(element?: Item): Promise<Item[]> {
+  async getChildren(element?: TerrastateItem): Promise<TerrastateItem[]> {
     if (element?.directory) {
       try {
         const tfstateFile = path.join(element.directory, "terraform.tfstate");
@@ -114,15 +115,15 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
 
         const items = tfstate.resources.map(
           (resource: Resource) =>
-            new Item({ type: "resource", resource: resource })
+            new TerrastateItem({ type: "resource", resource: resource })
         );
 
-        return items.length ? items : [new Item({ type: "none" })];
+        return items.length ? items : [new TerrastateItem({ type: "none" })];
       } catch (err) {
         if (err.message.startsWith("ENOENT")) {
-          return [new Item({ type: "none" })];
+          return [new TerrastateItem({ type: "none" })];
         } else {
-          return [new Item({ type: "error" })];
+          return [new TerrastateItem({ type: "error" })];
         }
       }
     }
@@ -130,28 +131,23 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     return this.rootItems;
   }
 
-  getTreeItem(element: Item): vscode.TreeItem {
+  getTreeItem(element: TerrastateItem): vscode.TreeItem {
     return element;
   }
 
-  refresh(): null {
-    return null;
+  refresh(item: TerrastateItem): void {
   }
 
-  apply(): null {
-    return null;
+  apply(item: TerrastateItem): void {
   }
 
-  destroy(): null {
-    return null;
+  destroy(item: TerrastateItem): void {
   }
 
-  taint(): null {
-    return null;
+  taint(item: TerrastateItem): void {
   }
 
-  untaint(): null {
-    return null;
+  untaint(item: TerrastateItem): void {
   }
 
   async sync(): Promise<void> {
@@ -165,7 +161,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
       dirs.some((dir, idx) => dir !== this.rootItems[idx].directory)
     ) {
       this.rootItems = dirs.map(
-        (directory) => new Item({ type: "directory", directory })
+        (directory) => new TerrastateItem({ type: "directory", directory })
       );
       this._onDidChangeTreeData.fire();
     }

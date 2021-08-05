@@ -1,29 +1,31 @@
 import * as vscode from "vscode";
-import { TerrastateProvider } from "./terrastateProvider";
+import { TerrastateItem, TerrastateProvider } from "./terrastateProvider";
 
 export async function activate(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   context: vscode.ExtensionContext
 ): Promise<void> {
   const terrastateProvider = new TerrastateProvider();
+
   vscode.window.registerTreeDataProvider(
     "terrastate.terrastate",
     terrastateProvider
   );
-  vscode.commands.registerCommand("terrastate.refresh", () =>
-    terrastateProvider.refresh()
+
+  vscode.commands.registerCommand("terrastate.refresh", (item: TerrastateItem) =>
+    terrastateProvider.refresh(item)
   );
-  vscode.commands.registerCommand("terrastate.apply", () =>
-    terrastateProvider.apply()
+  vscode.commands.registerCommand("terrastate.apply", (item: TerrastateItem) =>
+    terrastateProvider.apply(item)
   );
-  vscode.commands.registerCommand("terrastate.destroy", () =>
-    terrastateProvider.destroy()
+  vscode.commands.registerCommand("terrastate.destroy", (item: TerrastateItem) =>
+    terrastateProvider.destroy(item)
   );
-  vscode.commands.registerCommand("terrastate.taint", () =>
-    terrastateProvider.taint()
+  vscode.commands.registerCommand("terrastate.taint", (item: TerrastateItem) =>
+    terrastateProvider.taint(item)
   );
-  vscode.commands.registerCommand("terrastate.untaint", () =>
-    terrastateProvider.untaint()
+  vscode.commands.registerCommand("terrastate.untaint", (item: TerrastateItem) =>
+    terrastateProvider.untaint(item)
   );
   vscode.commands.registerCommand("terrastate.sync", () =>
     terrastateProvider.sync()
