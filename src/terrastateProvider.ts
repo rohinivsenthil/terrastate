@@ -206,9 +206,18 @@ export class TerrastateProvider
 
   async destroy(item: TerrastateItem): Promise<void> {
     if (item.contextValue === "directory") {
+      item.iconPath = new vscode.ThemeIcon(
+        "sync~spin",
+        new vscode.ThemeColor("list.errorForeground")
+      );
+      this._onDidChangeTreeData.fire();
       await destroy(item.directory);
-      console.log("terraform destroy");
     } else if (item.contextValue === "resource") {
+      item.iconPath = new vscode.ThemeIcon(
+        "sync~spin",
+        new vscode.ThemeColor("list.errorForeground")
+      );
+      this._onDidChangeTreeData.fire();
       await destroy(item.directory, item.resource?.address);
     }
   }
