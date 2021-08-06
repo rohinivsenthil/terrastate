@@ -40,7 +40,9 @@ export function destroy(directory: string, address?: string): Promise<void> {
   return new Promise((resolve, reject) => {
     execFile(
       "terraform",
-      address ? ["destroy", "-target", address] : ["destroy"],
+      address
+        ? ["destroy", "-auto-approve", "-target", address]
+        : ["destroy", "-auto-approve"],
       { cwd: directory },
       (err) => {
         if (err) {

@@ -57,7 +57,8 @@
       },
       {
         "command": "terrastate.apply",
-        "title": "Apply"
+        "title": "Apply",
+        "icon": "$(run)"
       },
       {
         "command": "terrastate.destroy",
@@ -85,6 +86,11 @@
         {
           "command": "terrastate.destroy",
           "when": "view == terrastate.terrastate && viewItem == resource",
+          "group": "inline"
+        },
+        {
+          "command": "terrastate.apply",
+          "when": "view == terrastate.terrastate && viewItem == dormant-resource",
           "group": "inline"
         },
         {

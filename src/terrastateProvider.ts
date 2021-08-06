@@ -56,7 +56,7 @@ export class TerrastateItem extends vscode.TreeItem {
       case "dormant-resource":
         this.label = resource?.name;
         this.description = resource?.type;
-        this.tooltip = "Dormant";
+        this.tooltip = "Not deployed";
         this.iconPath = new vscode.ThemeIcon("symbol-constructor");
         break;
       case "none":
