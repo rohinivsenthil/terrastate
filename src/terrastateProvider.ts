@@ -5,6 +5,7 @@ import {
   getDeployedResources,
   getResources,
   destroy,
+  apply,
 } from "./terraform";
 
 const TF_GLOB = "**/{*.tf,terraform.tfstate}";
@@ -202,7 +203,23 @@ export class TerrastateProvider
 
   refresh(item: TerrastateItem): void {}
 
-  apply(item: TerrastateItem): void {}
+  async apply(item: TerrastateItem): Promise<void> {
+    if (item.contextValue === "directory") {
+      item.iconPath = new vscode.ThemeIcon(
+        "sync~spin",
+        new vscode.ThemeColor("debugIcon.startForeground")
+      );
+      this._onDidChangeTreeData.fire();
+      await apply(item.directory);
+    } else if (item.contextValue === "dormant-resource") {
+      item.iconPath = new vscode.ThemeIcon(
+        "sync~spin",
+        new vscode.ThemeColor("debugIcon.startForeground")
+      );
+      this._onDidChangeTreeData.fire();
+      await apply(item.directory, item.resource?.address);
+    }
+  }
 
   async destroy(item: TerrastateItem): Promise<void> {
     if (item.contextValue === "directory") {

@@ -17,13 +17,15 @@ export async function activate(
     (item: TerrastateItem) => terrastateProvider.refresh(item)
   );
 
-  vscode.commands.registerCommand("terrastate.apply", (item: TerrastateItem) =>
-    terrastateProvider.apply(item)
+  vscode.commands.registerCommand("terrastate.apply", async (item: TerrastateItem) =>
+    await terrastateProvider.apply(item)
   );
 
   vscode.commands.registerCommand(
     "terrastate.destroy",
-    (item: TerrastateItem) => terrastateProvider.destroy(item)
+    async (item: TerrastateItem) => {
+      await terrastateProvider.destroy(item)
+    }
   );
 
   vscode.commands.registerCommand("terrastate.taint", (item: TerrastateItem) =>

@@ -53,3 +53,23 @@ export function destroy(directory: string, address?: string): Promise<void> {
     );
   });
 }
+
+export function apply(directory: string, address?: string): Promise<void> {
+  console.log(directory, address)
+  return new Promise((resolve, reject) => {
+    execFile(
+      "terraform",
+      address
+        ? ["apply", "-auto-approve", "-target", address]
+        : ["apply", "-auto-approve"],
+      { cwd: directory },
+      (err) => {
+        if (err) {
+          console.log(err);
+          reject(err);
+        }
+        resolve();
+      }
+    );
+  });
+}

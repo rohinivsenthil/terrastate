@@ -58,7 +58,7 @@
       {
         "command": "terrastate.apply",
         "title": "Apply",
-        "icon": "$(run)"
+        "icon": "$(cloud-upload)"
       },
       {
         "command": "terrastate.destroy",
