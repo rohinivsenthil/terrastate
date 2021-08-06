@@ -111,31 +111,36 @@ export class TerrastateProvider
     watcher.onDidDelete(({ fsPath }) => updateDir(path.dirname(fsPath)));
 
     setInterval(async () => {
-      const directories = new Set(
-        (await vscode.workspace.findFiles(TF_GLOB)).map(({ fsPath }) =>
-          path.dirname(fsPath)
-        )
-      );
-
-      if (
-        [...directories].every((directory) =>
-          this.directories.has(directory)
-        ) &&
-        [...this.directories].every((directory) => directories.has(directory))
-      ) {
-        return;
+      if (await this.updateDirectories()) {
+        this._onDidChangeTreeData.fire();
       }
-
-      // Removed directories
-      [...this.directories]
-        .filter((directory) => !directories.has(directory))
-        .map((directory) => {
-          this.resources.delete(directory);
-        });
-
-      this.directories = directories;
-      this._onDidChangeTreeData.fire();
     }, 1000);
+  }
+
+  async updateDirectories(): Promise<boolean> {
+    const directories = new Set(
+      (await vscode.workspace.findFiles(TF_GLOB)).map(({ fsPath }) =>
+        path.dirname(fsPath)
+      )
+    );
+
+    if (
+      [...directories].every((directory) => this.directories.has(directory)) &&
+      [...this.directories].every((directory) => directories.has(directory))
+    ) {
+      return false;
+    }
+
+    // Removed directories
+    [...this.directories]
+      .filter((directory) => !directories.has(directory))
+      .map((directory) => {
+        this.resources.delete(directory);
+      });
+
+    this.directories = directories;
+
+    return true;
   }
 
   async updateResources(directory: string): Promise<void> {
@@ -239,11 +244,7 @@ export class TerrastateProvider
   untaint(item: TerrastateItem): void {}
 
   async sync(): Promise<void> {
-    this.directories = new Set(
-      (await vscode.workspace.findFiles(TF_GLOB)).map(({ fsPath }) =>
-        path.dirname(fsPath)
-      )
-    );
+    await this.updateDirectories();
     this.resources.clear();
     this._onDidChangeTreeData.fire();
   }

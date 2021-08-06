@@ -99,8 +99,12 @@
           "group": "inline"
         },
         {
+          "command": "terrastate.refresh",
+          "when": "view == terrastate.terrastate && viewItem == directory"
+        },
+        {
           "command": "terrastate.apply",
-          "when": "view == terrastate.terrastate && viewItem =~ /^resource|directory$/"
+          "when": "view == terrastate.terrastate && viewItem =~ /^((dormant-)?resource|directory)$/"
         },
         {
           "command": "terrastate.destroy",
