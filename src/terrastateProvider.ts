@@ -7,8 +7,14 @@ import {
   destroy,
   apply,
 } from "./terraform";
-
-const TF_GLOB = "**/{*.tf,terraform.tfstate}";
+import {
+  TAINTED,
+  DEPLOYED,
+  DORMANT,
+  APPLY_LOADER,
+  DESTROY_LOADER,
+  TF_GLOB,
+} from "./constants";
 
 export class TerrastateItem extends vscode.TreeItem {
   directory: string;
@@ -47,18 +53,13 @@ export class TerrastateItem extends vscode.TreeItem {
         this.label = resource?.name;
         this.description = resource?.type;
         this.tooltip = resource?.tainted ? "Tainted" : "Deployed";
-        this.iconPath = resource?.tainted
-          ? new vscode.ThemeIcon(
-              "debug-alt",
-              new vscode.ThemeColor("list.warningForeground")
-            )
-          : new vscode.ThemeIcon("debug-start");
+        this.iconPath = resource?.tainted ? TAINTED : DEPLOYED;
         break;
       case "dormant-resource":
         this.label = resource?.name;
         this.description = resource?.type;
         this.tooltip = "Not deployed";
-        this.iconPath = new vscode.ThemeIcon("symbol-constructor");
+        this.iconPath = DORMANT;
         break;
       case "none":
         this.description = "(No resources deployed)";
@@ -206,18 +207,12 @@ export class TerrastateProvider
   async apply(item: TerrastateItem): Promise<void> {
     if (item.contextValue === "directory") {
       (this.resources.get(item.directory) || []).forEach((element) => {
-        element.iconPath = new vscode.ThemeIcon(
-          "sync~spin",
-          new vscode.ThemeColor("debugIcon.startForeground")
-        );
+        element.iconPath = APPLY_LOADER;
       });
       this._onDidChangeTreeData.fire();
       await apply(item.directory);
     } else if (item.contextValue === "dormant-resource") {
-      item.iconPath = new vscode.ThemeIcon(
-        "sync~spin",
-        new vscode.ThemeColor("debugIcon.startForeground")
-      );
+      item.iconPath = APPLY_LOADER;
       this._onDidChangeTreeData.fire();
       await apply(item.directory, item.resource?.address);
     }
@@ -227,19 +222,13 @@ export class TerrastateProvider
     if (item.contextValue === "directory") {
       (this.resources.get(item.directory) || []).forEach((element) => {
         if (element.contextValue === "resource") {
-          element.iconPath = new vscode.ThemeIcon(
-            "sync~spin",
-            new vscode.ThemeColor("list.errorForeground")
-          );
+          element.iconPath = DESTROY_LOADER;
         }
       });
       this._onDidChangeTreeData.fire();
       await destroy(item.directory);
     } else if (item.contextValue === "resource") {
-      item.iconPath = new vscode.ThemeIcon(
-        "sync~spin",
-        new vscode.ThemeColor("list.errorForeground")
-      );
+      item.iconPath = DESTROY_LOADER;
       this._onDidChangeTreeData.fire();
       await destroy(item.directory, item.resource?.address);
     }
