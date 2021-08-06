@@ -204,12 +204,12 @@ export class TerrastateProvider
 
   apply(item: TerrastateItem): void {}
 
-  destroy(item: TerrastateItem): void {
+  async destroy(item: TerrastateItem): Promise<void> {
     if (item.contextValue === "directory") {
-      destroy(item.directory);
+      await destroy(item.directory);
       console.log("terraform destroy");
     } else if (item.contextValue === "resource") {
-      destroy(item.directory, item.resource?.address)
+      await destroy(item.directory, item.resource?.address);
     }
   }
 
