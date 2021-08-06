@@ -28,7 +28,9 @@ export function getDeployedResources(directory: string): Promise<Resource[]> {
       ["show", "-json"],
       { cwd: directory },
       (err, stdout) => {
-        resolve(err ? [] : JSON.parse(stdout)?.values?.root_module?.resources);
+        resolve(
+          err ? [] : JSON.parse(stdout)?.values?.root_module?.resources || []
+        );
       }
     );
   });

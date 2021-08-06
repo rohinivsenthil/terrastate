@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { Resource, getDeployedResources } from "./terraform";
+import { Resource, getDeployedResources, getResources } from "./terraform";
 
 const TF_GLOB = "**/{*.tf,terraform.tfstate}";
 
@@ -47,6 +47,15 @@ export class TerrastateItem extends vscode.TreeItem {
               new vscode.ThemeColor("list.warningForeground")
             )
           : new vscode.ThemeIcon("debug-start");
+        break;
+      case "dormant-resource":
+        this.label = resource?.name;
+        this.description = resource?.type;
+        this.tooltip = "Dormant";
+        this.iconPath = new vscode.ThemeIcon(
+          "debug-alt",
+          new vscode.ThemeColor("list.warningForeground")
+        );
         break;
       case "none":
         this.description = "(No resources deployed)";
@@ -105,8 +114,10 @@ export class TerrastateProvider
       );
 
       if (
-        [...directories].every(directory => this.directories.has(directory)) &&
-        [...this.directories].every(directory => directories.has(directory))
+        [...directories].every((directory) =>
+          this.directories.has(directory)
+        ) &&
+        [...this.directories].every((directory) => directories.has(directory))
       ) {
         return;
       }
@@ -125,21 +136,42 @@ export class TerrastateProvider
 
   async updateResources(directory: string): Promise<void> {
     try {
-      this.resources.set(
-        directory,
-        (await getDeployedResources(directory)).map(
-          (resource) =>
-            new TerrastateItem({
-              type: "resource",
-              resource,
-            })
-        )
+      const deployedResources = (await getDeployedResources(directory)).map(
+        (resource) =>
+          new TerrastateItem({
+            type: "resource",
+            resource,
+          })
       );
+
+      const dormantResources = (await getResources(directory))
+        .filter((address) =>
+          deployedResources.every(
+            ({ resource }) => address !== resource?.address
+          )
+        )
+        .map(
+          (address) =>
+            new TerrastateItem({
+              type: "dormant-resource",
+              resource: {
+                address,
+                name: address.split(".")[1],
+                type: address.split(".")[0],
+              },
+            })
+        );
+
+      this.resources.set(directory, [
+        ...deployedResources,
+        ...dormantResources,
+      ]);
 
       if (!this.resources.get(directory)?.length) {
         this.resources.set(directory, [new TerrastateItem({ type: "none" })]);
       }
     } catch (err) {
+      console.error(err, directory);
       this.resources.set(directory, [new TerrastateItem({ type: "error" })]);
     }
   }
