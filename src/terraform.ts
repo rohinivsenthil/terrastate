@@ -35,3 +35,19 @@ export function getDeployedResources(directory: string): Promise<Resource[]> {
     );
   });
 }
+
+export function destroy(directory: string, address?: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      "terraform",
+      address ? ["destroy", "-target", address] : ["destroy"],
+      { cwd: directory },
+      (err) => {
+        if (err) {
+          reject(err);
+        }
+        resolve();
+      }
+    );
+  });
+}

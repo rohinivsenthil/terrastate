@@ -1,11 +1,16 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { Resource, getDeployedResources, getResources } from "./terraform";
+import {
+  Resource,
+  getDeployedResources,
+  getResources,
+  destroy,
+} from "./terraform";
 
 const TF_GLOB = "**/{*.tf,terraform.tfstate}";
 
 export class TerrastateItem extends vscode.TreeItem {
-  directory?: string;
+  directory: string;
   resource?: Resource;
 
   constructor({
@@ -14,7 +19,7 @@ export class TerrastateItem extends vscode.TreeItem {
     resource,
   }: {
     type: string;
-    directory?: string;
+    directory: string;
     resource?: Resource;
   }) {
     super(
@@ -137,6 +142,7 @@ export class TerrastateProvider
         (resource) =>
           new TerrastateItem({
             type: "resource",
+            directory,
             resource,
           })
       );
@@ -151,6 +157,7 @@ export class TerrastateProvider
           (address) =>
             new TerrastateItem({
               type: "dormant-resource",
+              directory,
               resource: {
                 address,
                 name: address.split(".")[1],
@@ -165,11 +172,14 @@ export class TerrastateProvider
       ]);
 
       if (!this.resources.get(directory)?.length) {
-        this.resources.set(directory, [new TerrastateItem({ type: "none" })]);
+        this.resources.set(directory, [
+          new TerrastateItem({ type: "none", directory }),
+        ]);
       }
     } catch (err) {
-      console.error(err, directory);
-      this.resources.set(directory, [new TerrastateItem({ type: "error" })]);
+      this.resources.set(directory, [
+        new TerrastateItem({ type: "error", directory }),
+      ]);
     }
   }
 
@@ -196,11 +206,10 @@ export class TerrastateProvider
 
   destroy(item: TerrastateItem): void {
     if (item.contextValue === "directory") {
+      destroy(item.directory);
       console.log("terraform destroy");
     } else if (item.contextValue === "resource") {
-      console.log(
-        `terraform destroy -target=${item.resource?.type}.${item.resource?.name}`
-      );
+      destroy(item.directory, item.resource?.address)
     }
   }
 
