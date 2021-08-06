@@ -1,8 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { watch } from "chokidar";
-import { Resource, getResources, getDeployedResources } from "./terraform";
-import { readdir, promises as fsPromises } from "fs";
+import { Resource, getDeployedResources } from "./terraform";
 
 const TF_GLOB = "**/{*.tf,terraform.tfstate}";
 
@@ -71,96 +69,90 @@ export class TerrastateProvider
 {
   private _onDidChangeTreeData: vscode.EventEmitter<TerrastateItem | void> =
     new vscode.EventEmitter<TerrastateItem | void>();
-  readonly onDidChangeTreeData: vscode.Event<TerrastateItem | void> =
+  readonly onDidChangeTreeData: vscode.Event<TerrastateItem | void | null> =
     this._onDidChangeTreeData.event;
 
-  private rootItems: TerrastateItem[] = [];
+  private directories: Set<string> = new Set<string>();
+  private resources: Map<string, TerrastateItem[]> = new Map<
+    string,
+    TerrastateItem[]
+  >();
 
   constructor() {
-    (vscode.workspace.workspaceFolders || []).forEach(({ uri }) => {
-      const watcher = watch(path.join(uri.path, TF_GLOB));
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      TF_GLOB,
+      false,
+      false,
+      false
+    );
 
-      watcher
-        .on("unlink", (unlinked) => {
-          const directory = path.dirname(unlinked);
-          readdir(directory, (err, files) => {
-            if (
-              err ||
-              !files.some((file) => /(.*\.tf|terraform\.tfstate)$/.test(file))
-            ) {
-              this.rootItems = this.rootItems.filter(
-                (item) => item.directory !== directory
-              );
-              this._onDidChangeTreeData.fire();
-            } else {
-              this._onDidChangeTreeData.fire(
-                this.rootItems.filter((item) => item.directory === directory)[0]
-              );
-            }
-          });
-        })
-        .on("change", (changed) => {
-          const directory = path.dirname(changed);
-          const item = this.rootItems.filter(
-            (item) => item.directory === directory
-          )[0];
-          this._onDidChangeTreeData.fire(item);
-        })
-        .on("add", (added) => {
-          const directory = path.dirname(added);
-          const item = this.rootItems.filter(
-            (item) => item.directory === directory
-          )[0];
-          if (item) {
-            this._onDidChangeTreeData.fire(item);
-          } else {
-            this.rootItems.push(
-              new TerrastateItem({ type: "directory", directory })
-            );
-            this._onDidChangeTreeData.fire();
-          }
-        });
-    });
+    const updateDir = (directory: string) => {
+      if (this.directories.has(directory)) {
+        this.updateResources(directory);
+        this._onDidChangeTreeData.fire();
+      }
+    };
+
+    watcher.onDidCreate(({ fsPath }) => updateDir(path.dirname(fsPath)));
+    watcher.onDidChange(({ fsPath }) => updateDir(path.dirname(fsPath)));
+    watcher.onDidDelete(({ fsPath }) => updateDir(path.dirname(fsPath)));
 
     setInterval(async () => {
-      const exists = await Promise.all(
-        this.rootItems.map(async (item) => {
-          try {
-            await fsPromises.access(item.directory ?? "");
-            return true;
-          } catch {
-            return false;
-          }
-        })
+      const directories = new Set(
+        (await vscode.workspace.findFiles(TF_GLOB)).map(({ fsPath }) =>
+          path.dirname(fsPath)
+        )
       );
 
-      this.rootItems = this.rootItems.filter((_, idx) => exists[idx]);
+      // Removed directories
+      [...this.directories]
+        .filter((directory) => !directories.has(directory))
+        .map((directory) => {
+          this.resources.delete(directory);
+        });
+
+      // Added directories
+      await Promise.all(
+        [...directories]
+          .filter((directory) => !this.directories.has(directory))
+          .map((directory) => this.updateResources(directory))
+      );
+
+      this.directories = directories;
+      this._onDidChangeTreeData.fire();
     }, 1000);
   }
 
-  async getChildren(element?: TerrastateItem): Promise<TerrastateItem[]> {
+  async updateResources(directory: string): Promise<void> {
+    try {
+      this.resources.set(
+        directory,
+        (await getDeployedResources(directory)).map(
+          (resource) =>
+            new TerrastateItem({
+              type: "resource",
+              resource,
+            })
+        )
+      );
+    } catch (err) {
+      this.resources.set(directory, [new TerrastateItem({ type: "error" })]);
+    }
+  }
+
+  getChildren(element?: TerrastateItem): TerrastateItem[] {
     if (element?.directory) {
-      console.log(element.directory);
-
-      try {
-        const deployedResources = await getDeployedResources(element.directory);
-        const dormantResources = (await getResources(element.directory)).filter(
-          (i) => deployedResources?.every(({ address }) => address !== i)
-        );
-
-        const items: TerrastateItem[] = [
-          ...deployedResources.map(
-            (resource) => new TerrastateItem({ type: "resource", resource })
-          ),
-        ];
-
-        return items.length ? items : [new TerrastateItem({ type: "none" })];
-      } catch (err) {
-        return [new TerrastateItem({ type: "error" })];
+      const resources = this.resources.get(element.directory);
+      if (resources === undefined || resources.length === 0) {
+        return [new TerrastateItem({ type: "none" })];
+      } else {
+        return resources;
       }
     }
 
-    return this.rootItems;
+    return [...this.directories]
+      .sort()
+      .map((directory) => new TerrastateItem({ type: "directory", directory }));
   }
 
   getTreeItem(element: TerrastateItem): vscode.TreeItem {
@@ -185,7 +177,25 @@ export class TerrastateProvider
 
   untaint(item: TerrastateItem): void {}
 
-  sync(): void {
+  async sync(): Promise<void> {
+    const directories = new Set(
+      (await vscode.workspace.findFiles(TF_GLOB)).map(({ fsPath }) =>
+        path.dirname(fsPath)
+      )
+    );
+
+    // Removed directories
+    [...this.directories]
+      .filter((directory) => !directories.has(directory))
+      .map((directory) => {
+        this.resources.delete(directory);
+      });
+
+    await Promise.all(
+      [...directories].map((directory) => this.updateResources(directory))
+    );
+
+    this.directories = directories;
     this._onDidChangeTreeData.fire();
   }
 }
