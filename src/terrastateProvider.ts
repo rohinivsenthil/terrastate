@@ -88,7 +88,7 @@ export class TerrastateProvider
 
     const updateDir = (directory: string) => {
       if (this.directories.has(directory)) {
-        this.updateResources(directory);
+        this.resources.delete(directory);
         this._onDidChangeTreeData.fire();
       }
     };
@@ -104,19 +104,19 @@ export class TerrastateProvider
         )
       );
 
+      if (
+        [...directories].every(directory => this.directories.has(directory)) &&
+        [...this.directories].every(directory => directories.has(directory))
+      ) {
+        return;
+      }
+
       // Removed directories
       [...this.directories]
         .filter((directory) => !directories.has(directory))
         .map((directory) => {
           this.resources.delete(directory);
         });
-
-      // Added directories
-      await Promise.all(
-        [...directories]
-          .filter((directory) => !this.directories.has(directory))
-          .map((directory) => this.updateResources(directory))
-      );
 
       this.directories = directories;
       this._onDidChangeTreeData.fire();
@@ -135,19 +135,21 @@ export class TerrastateProvider
             })
         )
       );
+
+      if (!this.resources.get(directory)?.length) {
+        this.resources.set(directory, [new TerrastateItem({ type: "none" })]);
+      }
     } catch (err) {
       this.resources.set(directory, [new TerrastateItem({ type: "error" })]);
     }
   }
 
-  getChildren(element?: TerrastateItem): TerrastateItem[] {
+  async getChildren(element?: TerrastateItem): Promise<TerrastateItem[]> {
     if (element?.directory) {
-      const resources = this.resources.get(element.directory);
-      if (resources === undefined || resources.length === 0) {
-        return [new TerrastateItem({ type: "none" })];
-      } else {
-        return resources;
+      if (this.resources.get(element.directory) === undefined) {
+        await this.updateResources(element.directory);
       }
+      return this.resources.get(element.directory) ?? [];
     }
 
     return [...this.directories]
@@ -178,24 +180,12 @@ export class TerrastateProvider
   untaint(item: TerrastateItem): void {}
 
   async sync(): Promise<void> {
-    const directories = new Set(
+    this.directories = new Set(
       (await vscode.workspace.findFiles(TF_GLOB)).map(({ fsPath }) =>
         path.dirname(fsPath)
       )
     );
-
-    // Removed directories
-    [...this.directories]
-      .filter((directory) => !directories.has(directory))
-      .map((directory) => {
-        this.resources.delete(directory);
-      });
-
-    await Promise.all(
-      [...directories].map((directory) => this.updateResources(directory))
-    );
-
-    this.directories = directories;
+    this.resources.clear();
     this._onDidChangeTreeData.fire();
   }
 }
