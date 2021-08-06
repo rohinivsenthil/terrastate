@@ -52,10 +52,7 @@ export class TerrastateItem extends vscode.TreeItem {
         this.label = resource?.name;
         this.description = resource?.type;
         this.tooltip = "Dormant";
-        this.iconPath = new vscode.ThemeIcon(
-          "debug-alt",
-          new vscode.ThemeColor("list.warningForeground")
-        );
+        this.iconPath = new vscode.ThemeIcon("symbol-constructor");
         break;
       case "none":
         this.description = "(No resources deployed)";
