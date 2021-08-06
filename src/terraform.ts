@@ -55,7 +55,6 @@ export function destroy(directory: string, address?: string): Promise<void> {
 }
 
 export function apply(directory: string, address?: string): Promise<void> {
-  console.log(directory, address)
   return new Promise((resolve, reject) => {
     execFile(
       "terraform",

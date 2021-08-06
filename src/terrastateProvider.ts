@@ -205,10 +205,12 @@ export class TerrastateProvider
 
   async apply(item: TerrastateItem): Promise<void> {
     if (item.contextValue === "directory") {
-      item.iconPath = new vscode.ThemeIcon(
-        "sync~spin",
-        new vscode.ThemeColor("debugIcon.startForeground")
-      );
+      (this.resources.get(item.directory) || []).forEach((element) => {
+        element.iconPath = new vscode.ThemeIcon(
+          "sync~spin",
+          new vscode.ThemeColor("debugIcon.startForeground")
+        );
+      });
       this._onDidChangeTreeData.fire();
       await apply(item.directory);
     } else if (item.contextValue === "dormant-resource") {
@@ -223,10 +225,14 @@ export class TerrastateProvider
 
   async destroy(item: TerrastateItem): Promise<void> {
     if (item.contextValue === "directory") {
-      item.iconPath = new vscode.ThemeIcon(
-        "sync~spin",
-        new vscode.ThemeColor("list.errorForeground")
-      );
+      (this.resources.get(item.directory) || []).forEach((element) => {
+        if (element.contextValue === "resource") {
+          element.iconPath = new vscode.ThemeIcon(
+            "sync~spin",
+            new vscode.ThemeColor("list.errorForeground")
+          );
+        }
+      });
       this._onDidChangeTreeData.fire();
       await destroy(item.directory);
     } else if (item.contextValue === "resource") {
