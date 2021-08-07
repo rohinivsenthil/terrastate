@@ -1,10 +1,15 @@
 import * as vscode from "vscode";
+import { setTerraformPath } from "./terraform";
 import { TerrastateItem, TerrastateProvider } from "./terrastateProvider";
 
 export async function activate(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   context: vscode.ExtensionContext
 ): Promise<void> {
+  if (!(await setTerraformPath())) {
+    return;
+  }
+
   const terrastateProvider = new TerrastateProvider();
 
   vscode.window.registerTreeDataProvider(

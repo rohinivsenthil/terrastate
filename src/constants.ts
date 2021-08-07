@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import * as path from "path";
 
+const TERRAFORM_VERISON_RANGE = ">=0.12.0";
+
 const DIRECTORY = path.join(__filename, "../../media/folder-terraform.svg");
 
 const TAINTED = new vscode.ThemeIcon(
@@ -25,6 +27,7 @@ const DESTROY_LOADER = new vscode.ThemeIcon(
 const TF_GLOB = "**/{*.tf,terraform.tfstate}";
 
 export {
+  TERRAFORM_VERISON_RANGE,
   DIRECTORY,
   TAINTED,
   DEPLOYED,

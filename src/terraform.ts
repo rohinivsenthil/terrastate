@@ -1,5 +1,7 @@
 import { spawn } from "child_process";
 import * as vscode from "vscode";
+import * as semver from "semver";
+import { TERRAFORM_VERISON_RANGE } from "./constants";
 
 export type Resource = {
   address: string;
@@ -9,17 +11,18 @@ export type Resource = {
 };
 
 const outputChannel = vscode.window.createOutputChannel("Terrastate");
+let terraformPath: string;
 
 function run(
   command: string,
   args: string[],
-  directory: string,
-  errorMessage: string
+  directory?: string,
+  errorMessage?: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, { cwd: directory, shell: true });
     let stdout = "";
-    let output = `${directory} > ${command} ${JSON.stringify(args)}\n`;
+    let output = `${directory || ""} > ${command} ${JSON.stringify(args)}\n`;
     let error: Error | undefined = undefined;
 
     proc.stdout.on("data", (data) => {
@@ -47,13 +50,15 @@ function run(
       outputChannel.append(output);
 
       if (error) {
-        vscode.window
-          .showErrorMessage(errorMessage, "Show Output")
-          .then((value) => {
-            if (value === "Show Output") {
-              outputChannel.show();
-            }
-          });
+        if (errorMessage) {
+          vscode.window
+            .showErrorMessage(errorMessage, "Show Output")
+            .then((value) => {
+              if (value === "Show Output") {
+                outputChannel.show();
+              }
+            });
+        }
         reject(error);
       } else {
         resolve(stdout);
@@ -62,11 +67,54 @@ function run(
   });
 }
 
+export async function setTerraformPath(): Promise<boolean> {
+  let terraformPaths: string[] | string =
+    vscode.workspace.getConfiguration("terrastate").get("terraformPath") ||
+    "terraform";
+
+  if (typeof terraformPaths === "string") {
+    terraformPaths = [terraformPaths];
+  }
+
+  const idx = (
+    await Promise.all(
+      terraformPaths.map(async (terraformPath) => {
+        try {
+          return semver.satisfies(
+            JSON.parse(await run(terraformPath, ["version", "-json"]))
+              .terraform_version,
+            TERRAFORM_VERISON_RANGE
+          );
+        } catch {
+          return false;
+        }
+      })
+    )
+  ).indexOf(true);
+
+  if (idx === -1) {
+    const choice = await vscode.window.showErrorMessage(
+      `Cannot find terraform installation that satisfies \`${TERRAFORM_VERISON_RANGE}\`. Set terrastate.terraformPath to point to your terraform installation`,
+      "Open Settings"
+    );
+    if (choice === "Open Settings") {
+      vscode.commands.executeCommand(
+        "workbench.action.openSettings",
+        "terrastate.terraformPath"
+      );
+    }
+    return false;
+  }
+
+  terraformPath = terraformPaths[idx];
+  return true;
+}
+
 export async function getResources(directory: string): Promise<string[]> {
   return [
     ...(
       await run(
-        "terraform",
+        terraformPath,
         ["graph"],
         directory,
         `An error occured when fetching resources for ${directory}`
@@ -81,7 +129,7 @@ export async function getDeployedResources(
   return (
     JSON.parse(
       await run(
-        "terraform",
+        terraformPath,
         ["show", "-no-color", "-json"],
         directory,
         `An error occured when fetching deployed resources for ${directory}`
@@ -95,7 +143,7 @@ export async function destroy(
   address?: string
 ): Promise<void> {
   await run(
-    "terraform",
+    terraformPath,
     address
       ? ["destroy", "-auto-approve", "-no-color", "-target", address]
       : ["destroy", "-auto-approve", "-no-color"],
@@ -111,7 +159,7 @@ export async function apply(
   address?: string
 ): Promise<void> {
   await run(
-    "terraform",
+    terraformPath,
     address
       ? ["apply", "-auto-approve", "-no-color", "-target", address]
       : ["apply", "-auto-approve", "-no-color"],
