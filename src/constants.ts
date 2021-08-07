@@ -1,4 +1,7 @@
 import * as vscode from "vscode";
+import * as path from "path";
+
+const DIRECTORY = path.join(__filename, "../../media/folder-terraform.svg");
 
 const TAINTED = new vscode.ThemeIcon(
   "debug-alt",
@@ -21,4 +24,12 @@ const DESTROY_LOADER = new vscode.ThemeIcon(
 
 const TF_GLOB = "**/{*.tf,terraform.tfstate}";
 
-export { TAINTED, DEPLOYED, DORMANT, APPLY_LOADER, DESTROY_LOADER, TF_GLOB };
+export {
+  DIRECTORY,
+  TAINTED,
+  DEPLOYED,
+  DORMANT,
+  APPLY_LOADER,
+  DESTROY_LOADER,
+  TF_GLOB,
+};

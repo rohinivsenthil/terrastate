@@ -85,7 +85,7 @@
       "view/item/context": [
         {
           "command": "terrastate.destroy",
-          "when": "view == terrastate.terrastate && viewItem == resource",
+          "when": "view == terrastate.terrastate && viewItem == deployed-resource",
           "group": "inline"
         },
         {
@@ -104,19 +104,19 @@
         },
         {
           "command": "terrastate.apply",
-          "when": "view == terrastate.terrastate && viewItem =~ /^((dormant-)?resource|directory)$/"
+          "when": "view == terrastate.terrastate && viewItem =~ /^((dormant|deployed)-resource|directory)$/"
         },
         {
           "command": "terrastate.destroy",
-          "when": "view == terrastate.terrastate && viewItem =~ /^resource|directory$/"
+          "when": "view == terrastate.terrastate && viewItem =~ /^deployed-resource|directory$/"
         },
         {
           "command": "terrastate.taint",
-          "when": "view == terrastate.terrastate && viewItem == resource"
+          "when": "view == terrastate.terrastate && viewItem == deployed-resource"
         },
         {
           "command": "terrastate.untaint",
-          "when": "view == terrastate.terrastate && viewItem == resource"
+          "when": "view == terrastate.terrastate && viewItem == deployed-resource"
         }
       ]
     }

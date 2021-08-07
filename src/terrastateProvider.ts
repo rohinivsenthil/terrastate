@@ -14,7 +14,15 @@ import {
   APPLY_LOADER,
   DESTROY_LOADER,
   TF_GLOB,
+  DIRECTORY,
 } from "./constants";
+
+type ItemType =
+  | "directory"
+  | "deployed-resource"
+  | "dormant-resource"
+  | "no-resources"
+  | "error";
 
 export class TerrastateItem extends vscode.TreeItem {
   directory: string;
@@ -25,7 +33,7 @@ export class TerrastateItem extends vscode.TreeItem {
     directory,
     resource,
   }: {
-    type: string;
+    type: ItemType;
     directory: string;
     resource?: Resource;
   }) {
@@ -44,15 +52,13 @@ export class TerrastateItem extends vscode.TreeItem {
             true
           )
         );
-        this.iconPath = path.join(
-          __filename,
-          "../../media/folder-terraform.svg"
-        );
+        this.tooltip = directory;
+        this.iconPath = DIRECTORY;
         break;
-      case "resource":
+      case "deployed-resource":
         this.label = resource?.name;
         this.description = resource?.type;
-        this.tooltip = resource?.tainted ? "Tainted" : "Deployed";
+        this.tooltip = `Deployed${resource?.tainted ? " • Tainted" : ""}`;
         this.iconPath = resource?.tainted ? TAINTED : DEPLOYED;
         break;
       case "dormant-resource":
@@ -61,14 +67,12 @@ export class TerrastateItem extends vscode.TreeItem {
         this.tooltip = "Not deployed";
         this.iconPath = DORMANT;
         break;
-      case "none":
+      case "no-resources":
         this.description = "(No resources deployed)";
         break;
       case "error":
         this.description = "(Failed to load resources)";
         break;
-      default:
-        throw new Error(`Invalid type ${type}`);
     }
 
     this.contextValue = type;
@@ -86,6 +90,7 @@ export class TerrastateProvider
     this._onDidChangeTreeData.event;
 
   private directories: Set<string> = new Set<string>();
+  private busy: Map<string, boolean> = new Map<string, boolean>();
   private resources: Map<string, TerrastateItem[]> = new Map<
     string,
     TerrastateItem[]
@@ -99,16 +104,17 @@ export class TerrastateProvider
       false
     );
 
-    const updateDir = (directory: string) => {
-      if (this.directories.has(directory)) {
+    const handleChange = ({ fsPath }: vscode.Uri) => {
+      const directory = path.dirname(fsPath);
+      if (this.directories.has(directory) && !this.busy.get(directory)) {
         this.resources.delete(directory);
         this._onDidChangeTreeData.fire();
       }
     };
 
-    watcher.onDidCreate(({ fsPath }) => updateDir(path.dirname(fsPath)));
-    watcher.onDidChange(({ fsPath }) => updateDir(path.dirname(fsPath)));
-    watcher.onDidDelete(({ fsPath }) => updateDir(path.dirname(fsPath)));
+    watcher.onDidChange(handleChange);
+    watcher.onDidCreate(handleChange);
+    watcher.onDidDelete(handleChange);
 
     setInterval(async () => {
       if (await this.updateDirectories()) {
@@ -117,7 +123,7 @@ export class TerrastateProvider
     }, 1000);
   }
 
-  async updateDirectories(): Promise<boolean> {
+  private async updateDirectories(): Promise<boolean> {
     const directories = new Set(
       (await vscode.workspace.findFiles(TF_GLOB)).map(({ fsPath }) =>
         path.dirname(fsPath)
@@ -143,12 +149,12 @@ export class TerrastateProvider
     return true;
   }
 
-  async updateResources(directory: string): Promise<void> {
+  private async updateResources(directory: string): Promise<void> {
     try {
       const deployedResources = (await getDeployedResources(directory)).map(
         (resource) =>
           new TerrastateItem({
-            type: "resource",
+            type: "deployed-resource",
             directory,
             resource,
           })
@@ -180,7 +186,7 @@ export class TerrastateProvider
 
       if (!this.resources.get(directory)?.length) {
         this.resources.set(directory, [
-          new TerrastateItem({ type: "none", directory }),
+          new TerrastateItem({ type: "no-resources", directory }),
         ]);
       }
     } catch (err) {
@@ -210,32 +216,50 @@ export class TerrastateProvider
   refresh(item: TerrastateItem): void {}
 
   async apply(item: TerrastateItem): Promise<void> {
-    if (item.contextValue === "directory") {
-      (this.resources.get(item.directory) || []).forEach((element) => {
-        element.iconPath = APPLY_LOADER;
-      });
+    try {
+      this.busy.set(item.directory, true);
+      if (item.contextValue === "directory") {
+        (this.resources.get(item.directory) || []).forEach((element) => {
+          element.iconPath = APPLY_LOADER;
+        });
+        this._onDidChangeTreeData.fire();
+        await apply(item.directory);
+      } else if (item.contextValue === "dormant-resource") {
+        item.iconPath = APPLY_LOADER;
+        this._onDidChangeTreeData.fire();
+        await apply(item.directory, item.resource?.address);
+      }
+    } catch (err) {
+      throw err;
+    } finally {
+      this.busy.delete(item.directory);
+      this.resources.delete(item.directory);
       this._onDidChangeTreeData.fire();
-      await apply(item.directory);
-    } else if (item.contextValue === "dormant-resource") {
-      item.iconPath = APPLY_LOADER;
-      this._onDidChangeTreeData.fire();
-      await apply(item.directory, item.resource?.address);
     }
   }
 
   async destroy(item: TerrastateItem): Promise<void> {
-    if (item.contextValue === "directory") {
-      (this.resources.get(item.directory) || []).forEach((element) => {
-        if (element.contextValue === "resource") {
-          element.iconPath = DESTROY_LOADER;
-        }
-      });
+    try {
+      this.busy.set(item.directory, true);
+      if (item.contextValue === "directory") {
+        (this.resources.get(item.directory) || []).forEach((element) => {
+          if (element.contextValue === "deployed-resource") {
+            element.iconPath = DESTROY_LOADER;
+          }
+        });
+        this._onDidChangeTreeData.fire();
+        await destroy(item.directory);
+      } else if (item.contextValue === "deployed-resource") {
+        item.iconPath = DESTROY_LOADER;
+        this._onDidChangeTreeData.fire();
+        await destroy(item.directory, item.resource?.address);
+      }
+    } catch (err) {
+      throw err;
+    } finally {
+      this.busy.delete(item.directory);
+      this.resources.delete(item.directory);
       this._onDidChangeTreeData.fire();
-      await destroy(item.directory);
-    } else if (item.contextValue === "resource") {
-      item.iconPath = DESTROY_LOADER;
-      this._onDidChangeTreeData.fire();
-      await destroy(item.directory, item.resource?.address);
     }
   }
 
@@ -245,7 +269,11 @@ export class TerrastateProvider
 
   async sync(): Promise<void> {
     await this.updateDirectories();
-    this.resources.clear();
+    [...this.resources.keys()].forEach((directory) => {
+      if (!this.directories.has(directory) || !this.busy.get(directory)) {
+        this.resources.delete(directory);
+      }
+    });
     this._onDidChangeTreeData.fire();
   }
 }
