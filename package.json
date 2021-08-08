@@ -5,6 +5,7 @@
   "icon": "media/terraform.png",
   "description": "Visual Studio Code extension to monitor the state of Terraform resources",
   "version": "0.0.1",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/rohinivsenthil/terrastate/issues"
   },
