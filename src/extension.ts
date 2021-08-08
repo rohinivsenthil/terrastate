@@ -28,7 +28,17 @@ export async function activate(
   );
 
   vscode.commands.registerCommand(
+    "terrastate.applyAll",
+    async (item: TerrastateItem) => await terrastateProvider.apply(item)
+  );
+
+  vscode.commands.registerCommand(
     "terrastate.destroy",
+    async (item: TerrastateItem) => await terrastateProvider.destroy(item)
+  );
+
+  vscode.commands.registerCommand(
+    "terrastate.destroyAll",
     async (item: TerrastateItem) => await terrastateProvider.destroy(item)
   );
 

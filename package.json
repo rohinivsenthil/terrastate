@@ -80,9 +80,17 @@
         "icon": "$(cloud-upload)"
       },
       {
+        "command": "terrastate.applyAll",
+        "title": "Apply All"
+      },
+      {
         "command": "terrastate.destroy",
         "title": "Destroy",
         "icon": "$(stop-circle)"
+      },
+      {
+        "command": "terrastate.destroyAll",
+        "title": "Destroy All"
       },
       {
         "command": "terrastate.taint",
@@ -104,13 +112,21 @@
       "view/item/context": [
         {
           "command": "terrastate.destroy",
-          "when": "view == terrastate.terrastate && viewItem == deployed-resource",
+          "when": "viewItem == deployed-resource",
           "group": "inline"
         },
         {
           "command": "terrastate.apply",
-          "when": "view == terrastate.terrastate && viewItem == dormant-resource",
+          "when": "viewItem == dormant-resource",
           "group": "inline"
+        },
+        {
+          "command": "terrastate.destroyAll",
+          "when": "view == terrastate.terrastate && viewItem == directory"
+        },
+        {
+          "command": "terrastate.applyAll",
+          "when": "view == terrastate.terrastate && viewItem == directory"
         },
         {
           "command": "terrastate.refresh",
@@ -123,11 +139,11 @@
         },
         {
           "command": "terrastate.apply",
-          "when": "view == terrastate.terrastate && viewItem =~ /^((dormant|deployed)-resource|directory)$/"
+          "when": "view == terrastate.terrastate && viewItem =~ /^((dormant|deployed)-resource)$/"
         },
         {
           "command": "terrastate.destroy",
-          "when": "view == terrastate.terrastate && viewItem =~ /^deployed-resource|directory$/"
+          "when": "view == terrastate.terrastate && viewItem =~ /^deployed-resource$/"
         },
         {
           "command": "terrastate.taint",
