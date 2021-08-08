@@ -6,6 +6,8 @@ import {
   getResources,
   destroy,
   apply,
+  taint,
+  untaint,
 } from "./terraform";
 import {
   TAINTED,
@@ -15,6 +17,8 @@ import {
   DESTROY_LOADER,
   TF_GLOB,
   DIRECTORY,
+  UNTAINT_LOADER,
+  TAINT_LOADER,
 } from "./constants";
 
 type ItemType =
@@ -229,8 +233,7 @@ export class TerrastateProvider
         this._onDidChangeTreeData.fire();
         await apply(item.directory, item.resource?.address);
       }
-    } catch (err) {
-      throw err;
+    } catch {
     } finally {
       this.busy.delete(item.directory);
       this.resources.delete(item.directory);
@@ -254,8 +257,7 @@ export class TerrastateProvider
         this._onDidChangeTreeData.fire();
         await destroy(item.directory, item.resource?.address);
       }
-    } catch (err) {
-      throw err;
+    } catch {
     } finally {
       this.busy.delete(item.directory);
       this.resources.delete(item.directory);
@@ -263,9 +265,33 @@ export class TerrastateProvider
     }
   }
 
-  taint(item: TerrastateItem): void {}
+  async taint(item: TerrastateItem): Promise<void> {
+    try {
+      this.busy.set(item.directory, true);
+      item.iconPath = TAINT_LOADER;
+      this._onDidChangeTreeData.fire();
+      await taint(item.directory, item.resource?.address || "");
+    } catch {
+    } finally {
+      this.busy.delete(item.directory);
+      this.resources.delete(item.directory);
+      this._onDidChangeTreeData.fire();
+    }
+  }
 
-  untaint(item: TerrastateItem): void {}
+  async untaint(item: TerrastateItem): Promise<void> {
+    try {
+      this.busy.set(item.directory, true);
+      item.iconPath = UNTAINT_LOADER;
+      this._onDidChangeTreeData.fire();
+      await untaint(item.directory, item.resource?.address || "");
+    } catch {
+    } finally {
+      this.busy.delete(item.directory);
+      this.resources.delete(item.directory);
+      this._onDidChangeTreeData.fire();
+    }
+  }
 
   async sync(): Promise<void> {
     await this.updateDirectories();

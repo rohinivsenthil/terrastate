@@ -24,6 +24,10 @@ const DESTROY_LOADER = new vscode.ThemeIcon(
   new vscode.ThemeColor("list.errorForeground")
 );
 
+const TAINT_LOADER = new vscode.ThemeIcon("sync~spin");
+
+const UNTAINT_LOADER = new vscode.ThemeIcon("sync~spin");
+
 const TF_GLOB = "**/{*.tf,terraform.tfstate}";
 
 export {
@@ -34,5 +38,7 @@ export {
   DORMANT,
   APPLY_LOADER,
   DESTROY_LOADER,
+  TAINT_LOADER,
+  UNTAINT_LOADER,
   TF_GLOB,
 };

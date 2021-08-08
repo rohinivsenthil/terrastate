@@ -169,3 +169,24 @@ export async function apply(
       : `An error occured when applying resources in ${directory}`
   );
 }
+
+export async function taint(directory: string, address: string): Promise<void> {
+  await run(
+    terraformPath,
+    ["taint", "-no-color", address],
+    directory,
+    `An error occured when tainting ${address} in ${directory}`
+  );
+}
+
+export async function untaint(
+  directory: string,
+  address: string
+): Promise<void> {
+  await run(
+    terraformPath,
+    ["untaint", "-no-color", address],
+    directory,
+    `An error occured when untainting ${address} in ${directory}`
+  );
+}
