@@ -14,12 +14,9 @@ import {
   TAINTED,
   DEPLOYED,
   DORMANT,
-  APPLY_LOADER,
-  DESTROY_LOADER,
+  LOADER,
   TF_GLOB,
   DIRECTORY,
-  UNTAINT_LOADER,
-  TAINT_LOADER,
 } from "./constants";
 
 type ItemType =
@@ -222,7 +219,7 @@ export class TerrastateProvider
     try {
       this.busy.set(item.directory, true);
       (this.resources.get(item.directory) || []).forEach((element) => {
-        element.iconPath = TAINT_LOADER;
+        element.iconPath = LOADER;
       });
       this._onDidChangeTreeData.fire();
       await refresh(item.directory);
@@ -239,12 +236,12 @@ export class TerrastateProvider
       this.busy.set(item.directory, true);
       if (item.contextValue === "directory") {
         (this.resources.get(item.directory) || []).forEach((element) => {
-          element.iconPath = APPLY_LOADER;
+          element.iconPath = LOADER;
         });
         this._onDidChangeTreeData.fire();
         await apply(item.directory);
       } else if (item.contextValue === "dormant-resource") {
-        item.iconPath = APPLY_LOADER;
+        item.iconPath = LOADER;
         this._onDidChangeTreeData.fire();
         await apply(item.directory, item.resource?.address);
       }
@@ -262,13 +259,13 @@ export class TerrastateProvider
       if (item.contextValue === "directory") {
         (this.resources.get(item.directory) || []).forEach((element) => {
           if (element.contextValue === "deployed-resource") {
-            element.iconPath = DESTROY_LOADER;
+            element.iconPath = LOADER;
           }
         });
         this._onDidChangeTreeData.fire();
         await destroy(item.directory);
       } else if (item.contextValue === "deployed-resource") {
-        item.iconPath = DESTROY_LOADER;
+        item.iconPath = LOADER;
         this._onDidChangeTreeData.fire();
         await destroy(item.directory, item.resource?.address);
       }
@@ -283,7 +280,7 @@ export class TerrastateProvider
   async taint(item: TerrastateItem): Promise<void> {
     try {
       this.busy.set(item.directory, true);
-      item.iconPath = TAINT_LOADER;
+      item.iconPath = LOADER;
       this._onDidChangeTreeData.fire();
       await taint(item.directory, item.resource?.address || "");
     } catch {
@@ -297,7 +294,7 @@ export class TerrastateProvider
   async untaint(item: TerrastateItem): Promise<void> {
     try {
       this.busy.set(item.directory, true);
-      item.iconPath = UNTAINT_LOADER;
+      item.iconPath = LOADER;
       this._onDidChangeTreeData.fire();
       await untaint(item.directory, item.resource?.address || "");
     } catch {
