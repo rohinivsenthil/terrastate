@@ -3,10 +3,10 @@
   "publisher": "rohinivsenthil",
   "displayName": "Terrastate",
   "icon": "media/terraform.png",
-  "description": "",
+  "description": "Visual Studio Code extension to monitor the state of Terraform resources",
   "version": "0.0.1",
   "bugs": {
-    "url": "https://github.com/rohinivsenthil/postcode/issues"
+    "url": "https://github.com/rohinivsenthil/terrastate/issues"
   },
   "author": {
     "name": "Rohini Senthil",
@@ -14,13 +14,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rohinivsenthil/postcode"
+    "url": "https://github.com/rohinivsenthil/terrastate"
   },
   "engines": {
     "vscode": "^1.58.0"
   },
   "categories": [
-    "Other"
+    "Visualization", "Other"
   ],
   "activationEvents": [
     "onView:terrastate.terrastate"
