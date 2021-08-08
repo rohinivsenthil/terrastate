@@ -8,6 +8,7 @@ import {
   apply,
   taint,
   untaint,
+  refresh,
 } from "./terraform";
 import {
   TAINTED,
@@ -217,7 +218,21 @@ export class TerrastateProvider
     return element;
   }
 
-  refresh(item: TerrastateItem): void {}
+  async refresh(item: TerrastateItem): Promise<void> {
+    try {
+      this.busy.set(item.directory, true);
+      (this.resources.get(item.directory) || []).forEach((element) => {
+        element.iconPath = TAINT_LOADER;
+      });
+      this._onDidChangeTreeData.fire();
+      await refresh(item.directory);
+    } catch {
+    } finally {
+      this.busy.delete(item.directory);
+      this.resources.delete(item.directory);
+      this._onDidChangeTreeData.fire();
+    }
+  }
 
   async apply(item: TerrastateItem): Promise<void> {
     try {

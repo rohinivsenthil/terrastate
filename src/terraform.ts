@@ -190,3 +190,12 @@ export async function untaint(
     `An error occured when untainting ${address} in ${directory}`
   );
 }
+
+export async function refresh(directory: string): Promise<void> {
+  await run(
+    terraformPath,
+    ["refresh", "-no-color"],
+    directory,
+    `An error occured when refreshing ${directory}`
+  );
+}
