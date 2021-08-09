@@ -34,6 +34,10 @@
         {
           "id": "terrastate.terrastate",
           "name": "Terrastate"
+        },
+        {
+          "id": "terrastate.graph",
+          "name": "Graph"
         }
       ]
     },

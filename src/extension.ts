@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { setTerraformPath } from "./terraform";
 import { TerrastateProvider } from "./terrastateProvider";
+import { GraphProvider } from "./graphProvider";
 
 export async function activate(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -16,6 +17,10 @@ export async function activate(
     "terrastate.terrastate",
     terrastateProvider
   );
+
+  const graphProvider = new GraphProvider();
+
+  vscode.window.registerTreeDataProvider("terrastate.graph", graphProvider);
 
   vscode.commands.registerCommand(
     "terrastate.refresh",
