@@ -22,9 +22,8 @@ export async function activate(
     (item: TerrastateItem) => terrastateProvider.refresh(item)
   );
 
-  vscode.commands.registerCommand(
-    "terrastate.init",
-    (item: TerrastateItem) => terrastateProvider.init(item)
+  vscode.commands.registerCommand("terrastate.init", (item: TerrastateItem) =>
+    terrastateProvider.init(item)
   );
 
   vscode.commands.registerCommand(

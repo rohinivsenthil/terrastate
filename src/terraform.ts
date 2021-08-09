@@ -209,7 +209,6 @@ export async function validate(directory: string): Promise<void> {
   );
 }
 
-
 export async function init(directory: string): Promise<void> {
   await run(
     terraformPath,
@@ -218,4 +217,3 @@ export async function init(directory: string): Promise<void> {
     `An error occured when initializing ${directory}`
   );
 }
-
