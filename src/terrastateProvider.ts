@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 import * as vscode from "vscode";
 import * as path from "path";
 import {
@@ -9,6 +10,8 @@ import {
   taint,
   untaint,
   refresh,
+  init,
+  validate,
 } from "./terraform";
 import {
   TAINTED,
@@ -223,6 +226,38 @@ export class TerrastateProvider
       });
       this._onDidChangeTreeData.fire();
       await refresh(item.directory);
+    } catch {
+    } finally {
+      this.busy.delete(item.directory);
+      this.resources.delete(item.directory);
+      this._onDidChangeTreeData.fire();
+    }
+  }
+
+  async init(item: TerrastateItem): Promise<void> {
+    try {
+      this.busy.set(item.directory, true);
+      (this.resources.get(item.directory) || []).forEach((element) => {
+        element.iconPath = LOADER;
+      });
+      this._onDidChangeTreeData.fire();
+      await init(item.directory);
+    } catch {
+    } finally {
+      this.busy.delete(item.directory);
+      this.resources.delete(item.directory);
+      this._onDidChangeTreeData.fire();
+    }
+  }
+
+  async validate(item: TerrastateItem): Promise<void> {
+    try {
+      this.busy.set(item.directory, true);
+      (this.resources.get(item.directory) || []).forEach((element) => {
+        element.iconPath = LOADER;
+      });
+      this._onDidChangeTreeData.fire();
+      await validate(item.directory);
     } catch {
     } finally {
       this.busy.delete(item.directory);

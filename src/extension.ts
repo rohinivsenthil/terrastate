@@ -23,6 +23,16 @@ export async function activate(
   );
 
   vscode.commands.registerCommand(
+    "terrastate.init",
+    (item: TerrastateItem) => terrastateProvider.init(item)
+  );
+
+  vscode.commands.registerCommand(
+    "terrastate.validate",
+    (item: TerrastateItem) => terrastateProvider.validate(item)
+  );
+
+  vscode.commands.registerCommand(
     "terrastate.apply",
     async (item: TerrastateItem) => await terrastateProvider.apply(item)
   );

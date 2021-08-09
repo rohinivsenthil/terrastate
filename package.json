@@ -75,6 +75,14 @@
         "icon": "$(timeline-refresh)"
       },
       {
+        "command": "terrastate.init",
+        "title": "Initialize"
+      },
+      {
+        "command": "terrastate.validate",
+        "title": "Validate"
+      },
+      {
         "command": "terrastate.apply",
         "title": "Apply",
         "icon": "$(cloud-upload)"
@@ -126,6 +134,14 @@
         },
         {
           "command": "terrastate.applyAll",
+          "when": "view == terrastate.terrastate && viewItem == directory"
+        },
+        {
+          "command": "terrastate.init",
+          "when": "view == terrastate.terrastate && viewItem == directory"
+        },
+        {
+          "command": "terrastate.validate",
           "when": "view == terrastate.terrastate && viewItem == directory"
         },
         {

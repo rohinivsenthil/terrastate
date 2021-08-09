@@ -199,3 +199,23 @@ export async function refresh(directory: string): Promise<void> {
     `An error occured when refreshing ${directory}`
   );
 }
+
+export async function validate(directory: string): Promise<void> {
+  await run(
+    terraformPath,
+    ["validate", "-no-color"],
+    directory,
+    `An error occured when validating ${directory}`
+  );
+}
+
+
+export async function init(directory: string): Promise<void> {
+  await run(
+    terraformPath,
+    ["init", "-no-color"],
+    directory,
+    `An error occured when initializing ${directory}`
+  );
+}
+
