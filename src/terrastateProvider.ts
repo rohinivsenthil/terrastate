@@ -29,9 +29,10 @@ type ItemType =
   | "no-resources"
   | "error";
 
-export class TerrastateItem extends vscode.TreeItem {
+class TerrastateItem extends vscode.TreeItem {
   directory: string;
   resource?: Resource;
+  type: ItemType;
 
   constructor({
     type,
@@ -80,6 +81,7 @@ export class TerrastateItem extends vscode.TreeItem {
         break;
     }
 
+    this.type = type;
     this.contextValue = type;
     this.directory = directory;
     this.resource = resource;
@@ -201,6 +203,26 @@ export class TerrastateProvider
     }
   }
 
+  private setBusy(item: TerrastateItem, type?: ItemType): void {
+    this.busy.set(item.directory, true);
+    this.resources.get(item.directory)?.forEach((element) => {
+      if (
+        (!item.resource?.address ||
+          item.resource?.address === element.resource?.address) &&
+        (!type || element.type === type)
+      ) {
+        element.iconPath = LOADER;
+      }
+    });
+    this._onDidChangeTreeData.fire();
+  }
+
+  private setIdle(item: TerrastateItem): void {
+    this.busy.delete(item.directory);
+    this.resources.delete(item.directory);
+    this._onDidChangeTreeData.fire();
+  }
+
   async getChildren(element?: TerrastateItem): Promise<TerrastateItem[]> {
     if (element?.directory) {
       if (this.resources.get(element.directory) === undefined) {
@@ -220,123 +242,71 @@ export class TerrastateProvider
 
   async refresh(item: TerrastateItem): Promise<void> {
     try {
-      this.busy.set(item.directory, true);
-      (this.resources.get(item.directory) || []).forEach((element) => {
-        element.iconPath = LOADER;
-      });
-      this._onDidChangeTreeData.fire();
+      this.setBusy(item);
       await refresh(item.directory);
     } catch {
     } finally {
-      this.busy.delete(item.directory);
-      this.resources.delete(item.directory);
-      this._onDidChangeTreeData.fire();
+      this.setIdle(item);
     }
   }
 
   async init(item: TerrastateItem): Promise<void> {
     try {
-      this.busy.set(item.directory, true);
-      (this.resources.get(item.directory) || []).forEach((element) => {
-        element.iconPath = LOADER;
-      });
-      this._onDidChangeTreeData.fire();
+      this.setBusy(item);
       await init(item.directory);
     } catch {
     } finally {
-      this.busy.delete(item.directory);
-      this.resources.delete(item.directory);
-      this._onDidChangeTreeData.fire();
+      this.setIdle(item);
     }
   }
 
   async validate(item: TerrastateItem): Promise<void> {
     try {
-      this.busy.set(item.directory, true);
-      (this.resources.get(item.directory) || []).forEach((element) => {
-        element.iconPath = LOADER;
-      });
-      this._onDidChangeTreeData.fire();
+      this.setBusy(item);
       await validate(item.directory);
     } catch {
     } finally {
-      this.busy.delete(item.directory);
-      this.resources.delete(item.directory);
-      this._onDidChangeTreeData.fire();
+      this.setIdle(item);
     }
   }
 
   async apply(item: TerrastateItem): Promise<void> {
     try {
-      this.busy.set(item.directory, true);
-      if (item.contextValue === "directory") {
-        (this.resources.get(item.directory) || []).forEach((element) => {
-          element.iconPath = LOADER;
-        });
-        this._onDidChangeTreeData.fire();
-        await apply(item.directory);
-      } else if (item.contextValue === "dormant-resource") {
-        item.iconPath = LOADER;
-        this._onDidChangeTreeData.fire();
-        await apply(item.directory, item.resource?.address);
-      }
+      this.setBusy(item);
+      await apply(item.directory, item.resource?.address);
     } catch {
     } finally {
-      this.busy.delete(item.directory);
-      this.resources.delete(item.directory);
-      this._onDidChangeTreeData.fire();
+      this.setIdle(item);
     }
   }
 
   async destroy(item: TerrastateItem): Promise<void> {
     try {
-      this.busy.set(item.directory, true);
-      if (item.contextValue === "directory") {
-        (this.resources.get(item.directory) || []).forEach((element) => {
-          if (element.contextValue === "deployed-resource") {
-            element.iconPath = LOADER;
-          }
-        });
-        this._onDidChangeTreeData.fire();
-        await destroy(item.directory);
-      } else if (item.contextValue === "deployed-resource") {
-        item.iconPath = LOADER;
-        this._onDidChangeTreeData.fire();
-        await destroy(item.directory, item.resource?.address);
-      }
+      this.setBusy(item, "deployed-resource");
+      await destroy(item.directory, item.resource?.address);
     } catch {
     } finally {
-      this.busy.delete(item.directory);
-      this.resources.delete(item.directory);
-      this._onDidChangeTreeData.fire();
+      this.setIdle(item);
     }
   }
 
   async taint(item: TerrastateItem): Promise<void> {
     try {
-      this.busy.set(item.directory, true);
-      item.iconPath = LOADER;
-      this._onDidChangeTreeData.fire();
+      this.setBusy(item);
       await taint(item.directory, item.resource?.address || "");
     } catch {
     } finally {
-      this.busy.delete(item.directory);
-      this.resources.delete(item.directory);
-      this._onDidChangeTreeData.fire();
+      this.setIdle(item);
     }
   }
 
   async untaint(item: TerrastateItem): Promise<void> {
     try {
-      this.busy.set(item.directory, true);
-      item.iconPath = LOADER;
-      this._onDidChangeTreeData.fire();
+      this.setBusy(item);
       await untaint(item.directory, item.resource?.address || "");
     } catch {
     } finally {
-      this.busy.delete(item.directory);
-      this.resources.delete(item.directory);
-      this._onDidChangeTreeData.fire();
+      this.setIdle(item);
     }
   }
 

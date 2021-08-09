@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { setTerraformPath } from "./terraform";
-import { TerrastateItem, TerrastateProvider } from "./terrastateProvider";
+import { TerrastateProvider } from "./terrastateProvider";
 
 export async function activate(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -19,48 +19,51 @@ export async function activate(
 
   vscode.commands.registerCommand(
     "terrastate.refresh",
-    (item: TerrastateItem) => terrastateProvider.refresh(item)
+    terrastateProvider.refresh.bind(terrastateProvider)
   );
 
-  vscode.commands.registerCommand("terrastate.init", (item: TerrastateItem) =>
-    terrastateProvider.init(item)
+  vscode.commands.registerCommand(
+    "terrastate.init",
+    terrastateProvider.init.bind(terrastateProvider)
   );
 
   vscode.commands.registerCommand(
     "terrastate.validate",
-    (item: TerrastateItem) => terrastateProvider.validate(item)
+    terrastateProvider.validate.bind(terrastateProvider)
   );
 
   vscode.commands.registerCommand(
     "terrastate.apply",
-    async (item: TerrastateItem) => await terrastateProvider.apply(item)
+    terrastateProvider.apply.bind(terrastateProvider)
   );
 
   vscode.commands.registerCommand(
     "terrastate.applyAll",
-    async (item: TerrastateItem) => await terrastateProvider.apply(item)
+    terrastateProvider.apply.bind(terrastateProvider)
   );
 
   vscode.commands.registerCommand(
     "terrastate.destroy",
-    async (item: TerrastateItem) => await terrastateProvider.destroy(item)
+    terrastateProvider.destroy.bind(terrastateProvider)
   );
 
   vscode.commands.registerCommand(
     "terrastate.destroyAll",
-    async (item: TerrastateItem) => await terrastateProvider.destroy(item)
+    terrastateProvider.destroy.bind(terrastateProvider)
   );
 
-  vscode.commands.registerCommand("terrastate.taint", (item: TerrastateItem) =>
-    terrastateProvider.taint(item)
+  vscode.commands.registerCommand(
+    "terrastate.taint",
+    terrastateProvider.taint.bind(terrastateProvider)
   );
 
   vscode.commands.registerCommand(
     "terrastate.untaint",
-    (item: TerrastateItem) => terrastateProvider.untaint(item)
+    terrastateProvider.untaint.bind(terrastateProvider)
   );
 
-  vscode.commands.registerCommand("terrastate.sync", () =>
-    terrastateProvider.sync()
+  vscode.commands.registerCommand(
+    "terrastate.sync",
+    terrastateProvider.sync.bind(terrastateProvider)
   );
 }
