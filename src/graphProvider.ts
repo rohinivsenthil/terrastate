@@ -50,6 +50,12 @@ export class GraphProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
         vscode.TreeItemCollapsibleState.None
       );
       item.iconPath = GRAPH;
+      item.command = {
+        command: "terrastate.graph",
+        title: "graph",
+        tooltip: "graph",
+        arguments: [directory],
+      };
       return item;
     });
   }

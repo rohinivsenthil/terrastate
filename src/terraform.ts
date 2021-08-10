@@ -217,3 +217,12 @@ export async function init(directory: string): Promise<void> {
     `An error occured when initializing ${directory}`
   );
 }
+
+export async function graph(directory: string): Promise<string> {
+  return await run(
+    terraformPath,
+    ["graph"],
+    directory,
+    `An error occured when graphing ${directory}`
+  );
+}

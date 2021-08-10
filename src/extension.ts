@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { setTerraformPath } from "./terraform";
+import { graph, setTerraformPath } from "./terraform";
 import { TerrastateProvider } from "./terrastateProvider";
 import { GraphProvider } from "./graphProvider";
 
@@ -71,4 +71,30 @@ export async function activate(
     "terrastate.sync",
     terrastateProvider.sync.bind(terrastateProvider)
   );
+
+  vscode.commands.registerCommand("terrastate.graph", async (arg: string) => {
+    const panel = vscode.window.createWebviewPanel(
+      "graph",
+      "graph",
+      vscode.ViewColumn.One,
+      { enableScripts: true }
+    );
+    panel.webview.html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    </head>
+      <body>
+        <div id="main"></div>
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
+        <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
+        <script>
+          const dot = ${JSON.stringify(await graph(arg))}
+          d3.select("#main").graphviz().renderDot(dot)
+        </script>
+      </body>
+    </html>
+    `;
+  });
 }
