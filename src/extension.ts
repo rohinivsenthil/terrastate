@@ -74,10 +74,14 @@ export async function activate(
 
   vscode.commands.registerCommand("terrastate.graph", async (arg: string) => {
     const panel = vscode.window.createWebviewPanel(
-      "graph",
-      "graph",
+      "Graph",
+      "Terrastate – Graph",
       vscode.ViewColumn.One,
       { enableScripts: true }
+    );
+    panel.iconPath = vscode.Uri.joinPath(
+      context.extensionUri,
+      "media/terraform.png"
     );
     panel.webview.html = `
     <!DOCTYPE html>

@@ -52,8 +52,8 @@ export class GraphProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
       item.iconPath = GRAPH;
       item.command = {
         command: "terrastate.graph",
-        title: "graph",
-        tooltip: "graph",
+        title: 'Terraform Graph',
+        tooltip: "Terraform Graph",
         arguments: [directory],
       };
       return item;
