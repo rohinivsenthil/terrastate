@@ -12,6 +12,7 @@ const TAINTED = new vscode.ThemeIcon(
 const DEPLOYED = new vscode.ThemeIcon("debug-start");
 const DORMANT = new vscode.ThemeIcon("symbol-constructor");
 const LOADER = new vscode.ThemeIcon("sync~spin");
+const GRAPH = new vscode.ThemeIcon("type-hierarchy");
 
 const TF_GLOB = "**/{*.tf,terraform.tfstate}";
 
@@ -22,5 +23,6 @@ export {
   DEPLOYED,
   DORMANT,
   LOADER,
+  GRAPH,
   TF_GLOB,
 };

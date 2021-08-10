@@ -1,7 +1,7 @@
 /* eslint-disable no-empty */
 import * as vscode from "vscode";
 import * as path from "path";
-import { TF_GLOB } from "./constants";
+import { TF_GLOB, GRAPH } from "./constants";
 
 export class GraphProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | void> =
@@ -39,12 +39,19 @@ export class GraphProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
   }
 
   async getChildren(): Promise<vscode.TreeItem[]> {
-    return [...this.directories]
-      .sort()
-      .map(
-        (directory) =>
-          new vscode.TreeItem(directory, vscode.TreeItemCollapsibleState.None)
+    return [...this.directories].sort().map((directory) => {
+      const item = new vscode.TreeItem(
+        path.dirname(
+          vscode.workspace.asRelativePath(
+            path.join(directory || "", "tmp"),
+            true
+          )
+        ),
+        vscode.TreeItemCollapsibleState.None
       );
+      item.iconPath = GRAPH;
+      return item;
+    });
   }
 
   getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
