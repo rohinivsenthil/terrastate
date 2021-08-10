@@ -1,3 +1,6 @@
+<div align="center">   
+  <img src="./media/terraform.png" height="130"/>
+ </div>
 <h1 align="center">Terrastate</h1>
 <div align="center">
   <strong> Monitor the state of your Terraform resources</strong>  
