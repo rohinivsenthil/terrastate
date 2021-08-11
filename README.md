@@ -1,5 +1,5 @@
 <div align="center">   
-  <img src="./media/terraform.png" height="130"/>
+  <img src="./media/terrastate.svg" height="130"/>
  </div>
 <h1 align="center">Terrastate</h1>
 <div align="center">

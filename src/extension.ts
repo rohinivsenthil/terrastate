@@ -81,7 +81,7 @@ export async function activate(
     );
     panel.iconPath = vscode.Uri.joinPath(
       context.extensionUri,
-      "media/terraform.png"
+      "media/terrastate.png"
     );
     panel.webview.html = `
     <!DOCTYPE html>

@@ -2,7 +2,7 @@
   "name": "terrastate",
   "publisher": "rohinivsenthil",
   "displayName": "Terrastate",
-  "icon": "media/terraform.png",
+  "icon": "media/terrastate.png",
   "description": "Visual Studio Code extension to monitor the state of Terraform resources",
   "version": "0.0.1",
   "license": "MIT",
@@ -46,7 +46,7 @@
         {
           "id": "terrastate",
           "title": "Terrastate",
-          "icon": "media/terraform.svg"
+          "icon": "media/terrastate.svg"
         }
       ]
     },
