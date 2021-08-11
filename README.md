@@ -15,6 +15,9 @@ Terrastate is a [Visual Studio Code](https://code.visualstudio.com/) [extension]
 
 ## Highlighted Features
 
+- Minimalist UI/UX to show the state of Terraform resources
+- Supports Terraform commands on single click
+- Shows directory level Terraform graph
 
 
 ## Quick start
@@ -24,6 +27,8 @@ Terrastate is a [Visual Studio Code](https://code.visualstudio.com/) [extension]
 **Step 3.** The terraform resources defined in the workspace will be listed in the right-side tree view
 
 ## Supported Commands
+
+To view the list of commands, left-click on the **directory**/**resource** in the Terrastate View.
 
 ### Directory Level
 
