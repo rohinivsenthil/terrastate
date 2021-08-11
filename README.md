@@ -1,5 +1,5 @@
 <div align="center">   
-  <img src="./media/terrastate.png" height="130"/>
+  <img src="https://raw.githubusercontent.com/rohinivsenthil/terrastate/master/media/terrastate.png" height="130"/>
  </div>
 <h1 align="center">Terrastate</h1>
 <div align="center">
