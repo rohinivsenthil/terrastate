@@ -25,12 +25,24 @@ Terrastate is a [Visual Studio Code](https://code.visualstudio.com/) [extension]
 
 ## Supported Commands
 
-### Folder Level
+### Directory Level
+
+| Command                  | Description                                          |
+| ------------------------ | ---------------------------------------------------- |
+| Apply All | Runs `terraform apply` on directory level |
+| Destory All | Runs `terraform destroy` on directory level |  
+| Initialize  | Runs `terraform init` on the directory |  
+| Refresh | Runs `terraform refresh` on the directory |
+| Validate | Runs `terraform validate` on the directory |
 
 ### Resource Level
 
 | Command                  | Description                                          |
 | ------------------------ | ---------------------------------------------------- |
+| Apply | Runs `terraform apply` targeted on the resource |
+| Destory  | Runs `terraform destroy` targeted on the resource |  
+| Taint | Runs `terraform taint` targeted on the resource |  
+| Untaint | Runs `terraform untaint` targeted on the resource |
 
 
 ## Issues, feature requests, and contributions
