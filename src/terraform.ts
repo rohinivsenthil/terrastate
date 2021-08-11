@@ -25,6 +25,8 @@ function run(
     let output = `${directory || ""} > ${command} ${JSON.stringify(args)}\n`;
     let error: Error | undefined = undefined;
 
+    proc.stdin.end();
+
     proc.stdout.on("data", (data) => {
       stdout += data.toString();
       output += data.toString();
@@ -117,7 +119,6 @@ export async function getResources(directory: string): Promise<string[]> {
         terraformPath,
         ["graph"],
         directory,
-        `An error occured when fetching resources for ${directory}`
       )
     ).matchAll(/\[label = "(.*)", shape = "box"]$/gm),
   ].map((i) => i[1]);
@@ -132,7 +133,7 @@ export async function getDeployedResources(
         terraformPath,
         ["show", "-no-color", "-json"],
         directory,
-        `An error occured when fetching deployed resources for ${directory}`
+        `Check if your directory is intialized with Terraform. An error occured when fetching resources for ${directory}`
       )
     )?.values?.root_module?.resources || []
   );
