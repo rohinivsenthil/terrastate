@@ -74,7 +74,7 @@ class TerrastateItem extends vscode.TreeItem {
         this.iconPath = DORMANT;
         break;
       case "no-resources":
-        this.description = "(No resources deployed)";
+        this.description = "(No resources found)";
         break;
       case "error":
         this.description = "(Failed to load resources)";
