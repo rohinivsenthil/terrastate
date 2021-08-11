@@ -57,10 +57,10 @@ Contributions are always welcome!
 
 #### Folder structure
 
-- **`package.json`** - this is the manifest file in which you declare your extension and command. The plugin registers a command and defines its title and command name. With this information VS Code can show the command in the command palette.
-- **`src/extension.ts`**: this is the main file where you will provide the implementation of your command. The file exports one function, `activate`, which is called the very first time your extension is activated (in this case by executing the command). Inside the `activate` function we call `registerCommand`. We pass the function containing the implementation of the command as the second parameter to `registerCommand`.
-- **`src/terraform.ts`** this is the file containing function definitions pertaining to Terraform.
-- **`src/terraformProvider.ts`** and **`src/graphProvider.ts`**:
+- **`package.json`**: this is the manifest file in which you declare your extension and command.
+- **`src/extension.ts`**: this is the main file where you will provide the implementation of your command. The file exports one function, `activate`, inside which we call `registerCommand`. We pass the function containing the implementation of the command as the second parameter to `registerCommand`.
+- **`src/terraform.ts`**: this is the file containing function definitions pertaining to Terraform.
+- **`src/terraformProvider.ts`** and **`src/graphProvider.ts`**: these are the files where you will define the Terrastate and Graph tree views respectively.
 
 #### Making changes
 
