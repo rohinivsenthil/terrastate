@@ -13,12 +13,18 @@
 
 Terrastate is a [Visual Studio Code](https://code.visualstudio.com/) [extension](https://marketplace.visualstudio.com/VSCode) that can be used to monitor, deploy and destroy Terraform resources. You can find the extension [here](https://marketplace.visualstudio.com/items?itemName=rohinivsenthil.terrastate).
 
+
+<div align="center">
+  <img src="https://user-images.githubusercontent.com/42040329/129020739-48d9c031-5b45-4694-87d1-8fa6b6c494d1.gif"/>
+  <br/>
+  <sup>Release: 1.0.0</sup>
+</div>
+
 ## Highlighted Features
 
 - Minimalist UI/UX to show the state of Terraform resources
 - Supports Terraform commands on single click
 - Shows directory level Terraform graph
-
 
 ## Quick start
 
@@ -83,9 +89,11 @@ Contributions are always welcome!
 
 - You can relaunch the extension from the debug toolbar after changing code in `src`.
 - You can also reload (`Ctrl+R` or `Cmd+R` on Mac) the VS Code window with your extension to load your changes.
-<!-- 
+
 ## Related
 
-- Read the [launch blog]
+- [MIT License](https://github.com/rohinivsenthil/terrastate/blob/master/LICENSE![terrastate](https://user-images.githubusercontent.com/42040329/129020767-85f8e868-48d1-4dd4-92b4-35026c706f40.gif)
+)
+<!-- - Read the [launch blog]
 - Featured #11 Product of the day on 
 - Featured in **Trending this week** on Visual Studio Code Marketplace -->
