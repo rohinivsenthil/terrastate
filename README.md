@@ -37,23 +37,22 @@ To view the list of commands, left-click on the **directory**/**resource** in th
 
 ### Directory Level
 
-| Command                  | Description                                          |
-| ------------------------ | ---------------------------------------------------- |
-| Apply All | Runs `terraform apply` on directory level |
-| Destory All | Runs `terraform destroy` on directory level |  
-| Initialize  | Runs `terraform init` on the directory |  
-| Refresh | Runs `terraform refresh` on the directory |
-| Validate | Runs `terraform validate` on the directory |
+| Command     | Description                                 |
+| ----------- | ------------------------------------------- |
+| Apply All   | Runs `terraform apply` on directory level   |
+| Destory All | Runs `terraform destroy` on directory level |
+| Initialize  | Runs `terraform init` on the directory      |
+| Refresh     | Runs `terraform refresh` on the directory   |
+| Validate    | Runs `terraform validate` on the directory  |
 
 ### Resource Level
 
-| Command                  | Description                                          |
-| ------------------------ | ---------------------------------------------------- |
-| Apply | Runs `terraform apply` targeted on the resource |
-| Destory  | Runs `terraform destroy` targeted on the resource |  
-| Taint | Runs `terraform taint` targeted on the resource |  
+| Command | Description                                       |
+| ------- | ------------------------------------------------- |
+| Apply   | Runs `terraform apply` targeted on the resource   |
+| Destory | Runs `terraform destroy` targeted on the resource |
+| Taint   | Runs `terraform taint` targeted on the resource   |
 | Untaint | Runs `terraform untaint` targeted on the resource |
-
 
 ## Issues, feature requests, and contributions
 
@@ -91,8 +90,7 @@ Contributions are always welcome!
 
 ## Related
 
-- [MIT License](https://github.com/rohinivsenthil/terrastate/blob/master/LICENSE![terrastate](https://user-images.githubusercontent.com/42040329/129020767-85f8e868-48d1-4dd4-92b4-35026c706f40.gif)
-)
+- [MIT License](<https://github.com/rohinivsenthil/terrastate/blob/master/LICENSE![terrastate](https://user-images.githubusercontent.com/42040329/129020767-85f8e868-48d1-4dd4-92b4-35026c706f40.gif)>)
 <!-- - Read the [launch blog]
-- Featured #11 Product of the day on 
+- Featured #11 Product of the day on
 - Featured in **Trending this week** on Visual Studio Code Marketplace -->

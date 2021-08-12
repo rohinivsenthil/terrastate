@@ -254,6 +254,9 @@ export class TerrastateProvider
     try {
       this.setBusy(item);
       await init(item.directory);
+      vscode.window.showInformationMessage(
+        `Successfully initialized ${item.directory}`
+      );
     } catch {
     } finally {
       this.setIdle(item);
@@ -264,6 +267,9 @@ export class TerrastateProvider
     try {
       this.setBusy(item);
       await validate(item.directory);
+      vscode.window.showInformationMessage(
+        `Successfully validated ${item.directory}`
+      );
     } catch {
     } finally {
       this.setIdle(item);

@@ -49,9 +49,9 @@ function run(
         output += `${error.message}\n`;
       }
 
-      outputChannel.append(output);
-
       if (error) {
+        outputChannel.append(output);
+
         if (errorMessage) {
           vscode.window
             .showErrorMessage(errorMessage, "Show Output")
@@ -114,13 +114,9 @@ export async function setTerraformPath(): Promise<boolean> {
 
 export async function getResources(directory: string): Promise<string[]> {
   return [
-    ...(
-      await run(
-        terraformPath,
-        ["graph"],
-        directory,
-      )
-    ).matchAll(/\[label = "(.*)", shape = "box"]$/gm),
+    ...(await run(terraformPath, ["graph"], directory)).matchAll(
+      /\[label = "(.*)", shape = "box"]$/gm
+    ),
   ].map((i) => i[1]);
 }
 
