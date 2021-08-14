@@ -138,28 +138,28 @@
         },
         {
           "command": "terrastate.destroyAll",
-          "when": "view == terrastate.terrastate && viewItem == directory"
+          "when": "view == terrastate.terrastate && viewItem =~ /^((top-)?module)$/"
         },
         {
           "command": "terrastate.applyAll",
-          "when": "view == terrastate.terrastate && viewItem == directory"
+          "when": "view == terrastate.terrastate && viewItem =~ /^((top-)?module)$/"
         },
         {
           "command": "terrastate.init",
-          "when": "view == terrastate.terrastate && viewItem == directory"
+          "when": "view == terrastate.terrastate && viewItem == top-module"
         },
         {
           "command": "terrastate.validate",
-          "when": "view == terrastate.terrastate && viewItem == directory"
+          "when": "view == terrastate.terrastate && viewItem == top-module"
         },
         {
           "command": "terrastate.refresh",
-          "when": "view == terrastate.terrastate && viewItem == directory",
+          "when": "view == terrastate.terrastate && viewItem == top-module",
           "group": "inline"
         },
         {
           "command": "terrastate.refresh",
-          "when": "view == terrastate.terrastate && viewItem == directory"
+          "when": "view == terrastate.terrastate && viewItem == top-module"
         },
         {
           "command": "terrastate.apply",
@@ -167,7 +167,7 @@
         },
         {
           "command": "terrastate.destroy",
-          "when": "view == terrastate.terrastate && viewItem =~ /^deployed-resource$/"
+          "when": "view == terrastate.terrastate && viewItem == deployed-resource"
         },
         {
           "command": "terrastate.taint",
