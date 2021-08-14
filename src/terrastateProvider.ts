@@ -1,6 +1,14 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { DEPLOYED, DIRECTORY, DORMANT, MODULE, TAINTED, TF_GLOB } from "./constants";
+import {
+  DEPLOYED,
+  DIRECTORY,
+  DORMANT,
+  LOADER,
+  MODULE,
+  TAINTED,
+  TF_GLOB,
+} from "./constants";
 import {
   apply,
   destroy,
@@ -99,7 +107,9 @@ class Item extends vscode.TreeItem {
         type: "module",
         directory: this.directory,
         module: module,
-        fullModule: `${this.topLevel ? "" : this.module + "."}module.${module}`,
+        fullModule: `${
+          this.topLevel ? "" : this.fullModule + "."
+        }module.${module}`,
         topLevel: false,
       });
       this.subModules?.set(module, subModule);
@@ -128,6 +138,25 @@ class Item extends vscode.TreeItem {
       topLevel: false,
     });
   }
+
+  setLoading(onlyDeployed = false) {
+    if ((!onlyDeployed || this.deployed) && !this.topLevel) {
+      this.iconPath = LOADER;
+    }
+
+    [...(this.resources?.values() || [])].map((item) =>
+      item.setLoading(onlyDeployed)
+    );
+
+    [...(this.subModules?.values() || [])].map((item) =>
+      item.setLoading(onlyDeployed)
+    );
+  }
+
+  setDeployed() {
+    this.deployed = true;
+    this.iconPath = DEPLOYED;
+  }
 }
 
 export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
@@ -138,6 +167,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     this._onDidChangeTreeData.event;
 
   private topLevelModules: Map<string, Item> = new Map();
+  private busyDirectories: Set<string> = new Set();
 
   constructor() {
     const watcher = vscode.workspace.createFileSystemWatcher(TF_GLOB);
@@ -181,6 +211,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
 
   private async update(directory?: string) {
     if (directory) {
+      if (this.busyDirectories.has(directory)) return;
       this.topLevelModules.set(
         directory,
         new Item({ type: "module", directory, topLevel: true })
@@ -213,7 +244,10 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
             parts
               .slice(0, -2)
               .filter((val, idx) => idx % 2 === 1)
-              .forEach((module) => (parent = parent?.getSubModule(module)));
+              .forEach((module) => {
+                parent = parent?.getSubModule(module);
+                parent?.setDeployed();
+              });
           }
           parent?.addResource(resource, true);
         });
@@ -235,6 +269,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
         if (!directories.has(key)) {
           updated = true;
           this.topLevelModules.delete(key);
+          this.busyDirectories.delete(key);
         }
       });
 
@@ -253,6 +288,10 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
 
   async apply(element: Item): Promise<void> {
     try {
+      this.busyDirectories.add(element.directory);
+      element.setLoading();
+      this._onDidChangeTreeData.fire();
+
       if (element.type === "module" && element.topLevel) {
         await apply(element.directory);
       } else if (element.type === "module") {
@@ -285,11 +324,18 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
       if (showOutput) {
         outputChannel.show();
       }
+    } finally {
+      this.topLevelModules.delete(element.directory);
+      this.busyDirectories.delete(element.directory);
     }
   }
 
   async destroy(element: Item): Promise<void> {
     try {
+      this.busyDirectories.add(element.directory);
+      element.setLoading(true);
+      this._onDidChangeTreeData.fire();
+
       if (element.type === "module" && element.topLevel) {
         await destroy(element.directory);
       } else if (element.type === "module") {
@@ -325,12 +371,18 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
       if (showOutput) {
         outputChannel.show();
       }
+    } finally {
+      this.topLevelModules.delete(element.directory);
+      this.busyDirectories.delete(element.directory);
     }
   }
 
   async init(element: Item): Promise<void> {
     try {
       await init(element.directory);
+      vscode.window.showInformationMessage(
+        `Successfully initialized ${element.directory}`
+      );
     } catch (err) {
       if (
         (await vscode.window.showErrorMessage(
@@ -359,11 +411,18 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
   }
 
   sync(): void {
-    this.topLevelModules.clear();
+    [...this.topLevelModules.keys()].map((key) => {
+      if (!this.busyDirectories.has(key)) {
+        this.topLevelModules.delete(key);
+      }
+    });
   }
 
   async taint(element: Item): Promise<void> {
     try {
+      this.busyDirectories.add(element.directory);
+      element.setLoading();
+      this._onDidChangeTreeData.fire();
       await taint(element.directory, element.resource?.address as string);
     } catch (err) {
       if (
@@ -374,11 +433,17 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
       ) {
         outputChannel.show();
       }
+    } finally {
+      this.topLevelModules.delete(element.directory);
+      this.busyDirectories.delete(element.directory);
     }
   }
 
   async untaint(element: Item): Promise<void> {
     try {
+      this.busyDirectories.add(element.directory);
+      element.setLoading();
+      this._onDidChangeTreeData.fire();
       await untaint(element.directory, element.resource?.address as string);
     } catch (err) {
       if (
@@ -389,6 +454,9 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
       ) {
         outputChannel.show();
       }
+    } finally {
+      this.topLevelModules.delete(element.directory);
+      this.busyDirectories.delete(element.directory);
     }
   }
 
