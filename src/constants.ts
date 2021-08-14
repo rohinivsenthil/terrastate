@@ -11,7 +11,10 @@ const TAINTED = new vscode.ThemeIcon(
 );
 const DEPLOYED = new vscode.ThemeIcon("debug-start");
 const DORMANT = new vscode.ThemeIcon("symbol-constructor");
-const MODULE = new vscode.ThemeIcon("symbol-constructor", new vscode.ThemeColor("terminal.ansiBrightBlue"));
+const MODULE = new vscode.ThemeIcon(
+  "symbol-constructor",
+  new vscode.ThemeColor("terminal.ansiBrightBlue")
+);
 const LOADER = new vscode.ThemeIcon("sync~spin");
 const GRAPH = new vscode.ThemeIcon("type-hierarchy");
 

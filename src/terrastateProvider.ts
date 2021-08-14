@@ -139,17 +139,20 @@ class Item extends vscode.TreeItem {
     });
   }
 
-  setLoading(onlyDeployed = false) {
-    if ((!onlyDeployed || this.deployed) && !this.topLevel) {
+  setLoading(options?: { onlyDeployed?: boolean; topLevel?: boolean }) {
+    if (
+      (!options?.onlyDeployed || this.deployed) &&
+      (options?.topLevel || !this.topLevel)
+    ) {
       this.iconPath = LOADER;
     }
 
     [...(this.resources?.values() || [])].map((item) =>
-      item.setLoading(onlyDeployed)
+      item.setLoading(options)
     );
 
     [...(this.subModules?.values() || [])].map((item) =>
-      item.setLoading(onlyDeployed)
+      item.setLoading(options)
     );
   }
 
@@ -333,7 +336,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
   async destroy(element: Item): Promise<void> {
     try {
       this.busyDirectories.add(element.directory);
-      element.setLoading(true);
+      element.setLoading({ onlyDeployed: true });
       this._onDidChangeTreeData.fire();
 
       if (element.type === "module" && element.topLevel) {
@@ -376,6 +379,9 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
 
   async init(element: Item): Promise<void> {
     try {
+      this.busyDirectories.add(element.directory);
+      element.setLoading({ topLevel: true });
+      this._onDidChangeTreeData.fire();
       await init(element.directory);
       vscode.window.showInformationMessage(
         `Successfully initialized ${element.directory}`
@@ -389,11 +395,17 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
       ) {
         outputChannel.show();
       }
+    } finally {
+      this.topLevelModules.delete(element.directory);
+      this.busyDirectories.delete(element.directory);
     }
   }
 
   async refresh(element: Item): Promise<void> {
     try {
+      this.busyDirectories.add(element.directory);
+      element.setLoading({ topLevel: true });
+      this._onDidChangeTreeData.fire();
       await refresh(element.directory);
     } catch (err) {
       if (
@@ -404,6 +416,9 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
       ) {
         outputChannel.show();
       }
+    } finally {
+      this.topLevelModules.delete(element.directory);
+      this.busyDirectories.delete(element.directory);
     }
   }
 
@@ -460,6 +475,9 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
   async validate(element: Item): Promise<void> {
     try {
       await validate(element.directory);
+      vscode.window.showInformationMessage(
+        `Successfully validated ${element.directory}`
+      );
     } catch (err) {
       if (
         (await vscode.window.showErrorMessage(
