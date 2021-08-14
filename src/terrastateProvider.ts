@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { DEPLOYED, DIRECTORY, DORMANT, TAINTED, TF_GLOB } from "./constants";
+import { DEPLOYED, DIRECTORY, DORMANT, MODULE, TAINTED, TF_GLOB } from "./constants";
 import {
   apply,
   destroy,
@@ -67,7 +67,7 @@ class Item extends vscode.TreeItem {
           )
         : module;
       this.tooltip = topLevel ? directory : module;
-      this.iconPath = DIRECTORY;
+      this.iconPath = topLevel ? DIRECTORY : MODULE;
       this.description = topLevel ? "" : "module";
       this.collapsibleState = topLevel
         ? vscode.TreeItemCollapsibleState.Expanded
