@@ -61,7 +61,11 @@ class Item extends vscode.TreeItem {
       this.subModules = new Map();
       this.resources = new Map();
       this.contextValue = `${topLevel ? "top-" : ""}module`;
-      this.label = topLevel ? directory : module;
+      this.label = topLevel
+        ? path.dirname(
+            vscode.workspace.asRelativePath(path.join(directory, "tmp"), true)
+          )
+        : module;
       this.tooltip = topLevel ? directory : module;
       this.iconPath = DIRECTORY;
       this.description = topLevel ? "" : "module";
