@@ -22,7 +22,7 @@ function run(
   command: string,
   args: string[],
   directory?: string,
-  errorMessage?: string
+  showError = true
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, { cwd: directory, shell: true });
@@ -55,17 +55,7 @@ function run(
       }
 
       if (error) {
-        outputChannel.append(output);
-
-        if (errorMessage) {
-          vscode.window
-            .showErrorMessage(errorMessage, "Show Output")
-            .then((value) => {
-              if (value === "Show Output") {
-                outputChannel.show();
-              }
-            });
-        }
+        if (showError) outputChannel.append(output);
         reject(error);
       } else {
         resolve(stdout);
@@ -88,8 +78,9 @@ export async function setTerraformPath(): Promise<boolean> {
       terraformPaths.map(async (terraformPath) => {
         try {
           return semver.satisfies(
-            JSON.parse(await run(terraformPath, ["version", "-json"]))
-              .terraform_version,
+            JSON.parse(
+              await run(terraformPath, ["version", "-json"], undefined, false)
+            ).terraform_version,
             TERRAFORM_VERISON_RANGE
           );
         } catch {
@@ -114,12 +105,14 @@ export async function setTerraformPath(): Promise<boolean> {
   }
 
   terraformPath = terraformPaths[idx];
+  outputChannel.appendLine(`Using terraform at ${terraformPath}`);
+
   return true;
 }
 
 export async function getResources(directory: string): Promise<string[]> {
   return [
-    ...(await run(terraformPath, ["graph"], directory)).matchAll(
+    ...(await run(terraformPath, ["graph", "-no-color"], directory)).matchAll(
       /\[label = "(.*)", shape = "box"]$/gm
     ),
   ].map((i) => i[1]);
@@ -129,12 +122,7 @@ export async function getDeployedResources(
   directory: string
 ): Promise<Resource[]> {
   const result = JSON.parse(
-    await run(
-      terraformPath,
-      ["show", "-no-color", "-json"],
-      directory,
-      `Check if your directory is intialized with Terraform. An error occured when fetching resources for ${directory}`
-    )
+    await run(terraformPath, ["show", "-no-color", "-json"], directory)
   );
 
   let resources: Resource[] = [];
@@ -158,10 +146,7 @@ export async function destroy(
     address
       ? ["destroy", "-auto-approve", "-no-color", "-target", address]
       : ["destroy", "-auto-approve", "-no-color"],
-    directory,
-    address
-      ? `An error occured when destroying ${address} in ${directory}`
-      : `An error occured when destroying resources in ${directory}`
+    directory
   );
 }
 
@@ -174,66 +159,35 @@ export async function apply(
     address
       ? ["apply", "-auto-approve", "-no-color", "-target", address]
       : ["apply", "-auto-approve", "-no-color"],
-    directory,
-    address
-      ? `An error occured when applying ${address} in ${directory}`
-      : `An error occured when applying resources in ${directory}`
+    directory
   );
 }
 
 export async function taint(directory: string, address: string): Promise<void> {
-  await run(
-    terraformPath,
-    ["taint", "-no-color", address],
-    directory,
-    `An error occured when tainting ${address} in ${directory}`
-  );
+  await run(terraformPath, ["taint", "-no-color", address], directory);
 }
 
 export async function untaint(
   directory: string,
   address: string
 ): Promise<void> {
-  await run(
-    terraformPath,
-    ["untaint", "-no-color", address],
-    directory,
-    `An error occured when untainting ${address} in ${directory}`
-  );
+  await run(terraformPath, ["untaint", "-no-color", address], directory);
 }
 
 export async function refresh(directory: string): Promise<void> {
-  await run(
-    terraformPath,
-    ["refresh", "-no-color"],
-    directory,
-    `An error occured when refreshing ${directory}`
-  );
+  await run(terraformPath, ["refresh", "-no-color"], directory);
 }
 
 export async function validate(directory: string): Promise<void> {
-  await run(
-    terraformPath,
-    ["validate", "-no-color"],
-    directory,
-    `An error occured when validating ${directory}`
-  );
+  await run(terraformPath, ["validate", "-no-color"], directory);
 }
 
 export async function init(directory: string): Promise<void> {
-  await run(
-    terraformPath,
-    ["init", "-no-color"],
-    directory,
-    `An error occured when initializing ${directory}`
-  );
+  await run(terraformPath, ["init", "-no-color"], directory);
 }
 
 export async function graph(directory: string): Promise<string> {
-  return await run(
-    terraformPath,
-    ["graph"],
-    directory,
-    `An error occured when graphing ${directory}`
-  );
+  return await run(terraformPath, ["graph"], directory);
 }
+
+export { outputChannel };

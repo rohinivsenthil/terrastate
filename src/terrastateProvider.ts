@@ -7,6 +7,7 @@ import {
   getDeployedResources,
   getResources,
   init,
+  outputChannel,
   refresh,
   Resource,
   taint,
@@ -27,6 +28,7 @@ class Item extends vscode.TreeItem {
 
   subModules?: Map<string, Item>;
   resources?: Map<string, Item>;
+  error?: Item;
 
   constructor({
     type,
@@ -114,6 +116,14 @@ class Item extends vscode.TreeItem {
       })
     );
   }
+
+  addError() {
+    this.error = new Item({
+      type: "error",
+      directory: this.directory,
+      topLevel: false,
+    });
+  }
 }
 
 export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
@@ -139,7 +149,8 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
 
   getChildren(element?: Item): Item[] {
     if (element) {
-      return [
+      const children = [
+        ...(element.error ? [element.error] : []),
         ...[...(element.subModules?.keys() || [])]
           .sort()
           .map((key) => element.subModules?.get(key) as Item),
@@ -147,6 +158,16 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
           .sort()
           .map((key) => element.resources?.get(key) as Item),
       ];
+
+      return children.length
+        ? children
+        : [
+            new Item({
+              type: "no-resources",
+              directory: element.directory,
+              topLevel: false,
+            }),
+          ];
     } else {
       return [...this.topLevelModules.keys()]
         .sort()
@@ -161,36 +182,40 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
         new Item({ type: "module", directory, topLevel: true })
       );
 
-      (await getResources(directory)).map((address) => {
-        const parts = address.split(".");
-        let parent = this.topLevelModules.get(directory);
-        if (parts.length > 2) {
-          parts
-            .slice(0, -2)
-            .filter((val, idx) => idx % 2 === 1)
-            .forEach((module) => (parent = parent?.getSubModule(module)));
-        }
-        parent?.addResource(
-          {
-            address,
-            type: parts[parts.length - 2],
-            name: parts[parts.length - 1],
-          },
-          false
-        );
-      });
+      try {
+        (await getResources(directory)).map((address) => {
+          const parts = address.split(".");
+          let parent = this.topLevelModules.get(directory);
+          if (parts.length > 2) {
+            parts
+              .slice(0, -2)
+              .filter((val, idx) => idx % 2 === 1)
+              .forEach((module) => (parent = parent?.getSubModule(module)));
+          }
+          parent?.addResource(
+            {
+              address,
+              type: parts[parts.length - 2],
+              name: parts[parts.length - 1],
+            },
+            false
+          );
+        });
 
-      (await getDeployedResources(directory)).map((resource) => {
-        const parts = resource.address.split(".");
-        let parent = this.topLevelModules.get(directory);
-        if (parts.length > 2) {
-          parts
-            .slice(0, -2)
-            .filter((val, idx) => idx % 2 === 1)
-            .forEach((module) => (parent = parent?.getSubModule(module)));
-        }
-        parent?.addResource(resource, true);
-      });
+        (await getDeployedResources(directory)).map((resource) => {
+          const parts = resource.address.split(".");
+          let parent = this.topLevelModules.get(directory);
+          if (parts.length > 2) {
+            parts
+              .slice(0, -2)
+              .filter((val, idx) => idx % 2 === 1)
+              .forEach((module) => (parent = parent?.getSubModule(module)));
+          }
+          parent?.addResource(resource, true);
+        });
+      } catch (err) {
+        this.topLevelModules.get(directory)?.addError();
+      }
 
       this._onDidChangeTreeData.fire();
     } else {
@@ -223,31 +248,110 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
   }
 
   async apply(element: Item): Promise<void> {
-    if (element.type === "module" && element.topLevel) {
-      apply(element.directory);
-    } else if (element.type === "module") {
-      apply(element.directory, element.fullModule);
-    } else if (element.type === "resource") {
-      apply(element.directory, element.resource?.address);
+    try {
+      if (element.type === "module" && element.topLevel) {
+        await apply(element.directory);
+      } else if (element.type === "module") {
+        await apply(element.directory, element.fullModule);
+      } else if (element.type === "resource") {
+        await apply(element.directory, element.resource?.address);
+      }
+    } catch (err) {
+      let showOutput = false;
+      if (element.type === "module" && element.topLevel) {
+        showOutput =
+          (await vscode.window.showErrorMessage(
+            `An error occured when applying ${element.directory}`,
+            "Show Output"
+          )) === "Show Output";
+      } else if (element.type === "module") {
+        showOutput =
+          (await vscode.window.showErrorMessage(
+            `An error occured when applying module "${element.fullModule}" in ${element.directory}`,
+            "Show Output"
+          )) === "Show Output";
+      } else if (element.type === "resource") {
+        showOutput =
+          (await vscode.window.showErrorMessage(
+            `An error occured when applying resource "${element.resource?.address}" in ${element.directory}`,
+            "Show Output"
+          )) === "Show Output";
+      }
+
+      if (showOutput) {
+        outputChannel.show();
+      }
     }
   }
 
   async destroy(element: Item): Promise<void> {
-    if (element.type === "module" && element.topLevel) {
-      destroy(element.directory);
-    } else if (element.type === "module") {
-      destroy(element.directory, element.fullModule);
-    } else if (element.type === "resource") {
-      destroy(element.directory, element.resource?.address);
+    try {
+      if (element.type === "module" && element.topLevel) {
+        await destroy(element.directory);
+      } else if (element.type === "module") {
+        await destroy(element.directory, element.fullModule);
+      } else if (element.type === "resource") {
+        await destroy(element.directory, element.resource?.address);
+      }
+    } catch (err) {
+      console.log("hello");
+      console.log(err);
+
+      let showOutput = false;
+      if (element.type === "module" && element.topLevel) {
+        showOutput =
+          (await vscode.window.showErrorMessage(
+            `An error occured when destroying ${element.directory}`,
+            "Show Output"
+          )) === "Show Output";
+      } else if (element.type === "module") {
+        showOutput =
+          (await vscode.window.showErrorMessage(
+            `An error occured when destroying module "${element.fullModule}" in ${element.directory}`,
+            "Show Output"
+          )) === "Show Output";
+      } else if (element.type === "resource") {
+        showOutput =
+          (await vscode.window.showErrorMessage(
+            `An error occured when destroying resource "${element.resource?.address}" in ${element.directory}`,
+            "Show Output"
+          )) === "Show Output";
+      }
+
+      if (showOutput) {
+        outputChannel.show();
+      }
     }
   }
 
   async init(element: Item): Promise<void> {
-    init(element.directory);
+    try {
+      await init(element.directory);
+    } catch (err) {
+      if (
+        (await vscode.window.showErrorMessage(
+          `An error occured when initializing ${element.directory}`,
+          "Show Output"
+        )) === "Show Output"
+      ) {
+        outputChannel.show();
+      }
+    }
   }
 
   async refresh(element: Item): Promise<void> {
-    refresh(element.directory);
+    try {
+      await refresh(element.directory);
+    } catch (err) {
+      if (
+        (await vscode.window.showErrorMessage(
+          `An error occured when refreshing ${element.directory}`,
+          "Show Output"
+        )) === "Show Output"
+      ) {
+        outputChannel.show();
+      }
+    }
   }
 
   sync(): void {
@@ -255,14 +359,47 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
   }
 
   async taint(element: Item): Promise<void> {
-    taint(element.directory, element.resource?.address as string);
+    try {
+      await taint(element.directory, element.resource?.address as string);
+    } catch (err) {
+      if (
+        (await vscode.window.showErrorMessage(
+          `An error occured when tainting resource "${element.resource?.address}" in ${element.directory}`,
+          "Show Output"
+        )) === "Show Output"
+      ) {
+        outputChannel.show();
+      }
+    }
   }
 
   async untaint(element: Item): Promise<void> {
-    untaint(element.directory, element.resource?.address as string);
+    try {
+      await untaint(element.directory, element.resource?.address as string);
+    } catch (err) {
+      if (
+        (await vscode.window.showErrorMessage(
+          `An error occured when untainting resource "${element.resource?.address}" in ${element.directory}`,
+          "Show Output"
+        )) === "Show Output"
+      ) {
+        outputChannel.show();
+      }
+    }
   }
 
   async validate(element: Item): Promise<void> {
-    validate(element.directory);
+    try {
+      await validate(element.directory);
+    } catch (err) {
+      if (
+        (await vscode.window.showErrorMessage(
+          `An error occured when validating  ${element.directory}`,
+          "Show Output"
+        )) === "Show Output"
+      ) {
+        outputChannel.show();
+      }
+    }
   }
 }
