@@ -1,328 +1,268 @@
-/* eslint-disable no-empty */
 import * as vscode from "vscode";
 import * as path from "path";
+import { DEPLOYED, DIRECTORY, DORMANT, TAINTED, TF_GLOB } from "./constants";
 import {
-  Resource,
+  apply,
+  destroy,
   getDeployedResources,
   getResources,
-  destroy,
-  apply,
+  init,
+  refresh,
+  Resource,
   taint,
   untaint,
-  refresh,
-  init,
   validate,
 } from "./terraform";
-import {
-  TAINTED,
-  DEPLOYED,
-  DORMANT,
-  LOADER,
-  TF_GLOB,
-  DIRECTORY,
-} from "./constants";
 
-type ItemType =
-  | "directory"
-  | "deployed-resource"
-  | "dormant-resource"
-  | "no-resources"
-  | "error";
+type ItemType = "module" | "resource" | "no-resources" | "error";
 
-class TerrastateItem extends vscode.TreeItem {
+class Item extends vscode.TreeItem {
+  type: ItemType;
   directory: string;
   resource?: Resource;
-  type: ItemType;
+  topLevel: boolean;
+  deployed?: boolean;
+  module?: string;
+  fullModule?: string;
+
+  subModules?: Map<string, Item>;
+  resources?: Map<string, Item>;
 
   constructor({
     type,
     directory,
     resource,
+    topLevel,
+    deployed,
+    module,
+    fullModule,
   }: {
     type: ItemType;
     directory: string;
     resource?: Resource;
+    topLevel: boolean;
+    deployed?: boolean;
+    module?: string;
+    fullModule?: string;
   }) {
-    super(
-      "",
-      type === "directory"
-        ? vscode.TreeItemCollapsibleState.Expanded
-        : vscode.TreeItemCollapsibleState.None
-    );
-
-    switch (type) {
-      case "directory":
-        this.label = path.dirname(
-          vscode.workspace.asRelativePath(
-            path.join(directory || "", "tmp"),
-            true
-          )
-        );
-        this.tooltip = directory;
-        this.iconPath = DIRECTORY;
-        break;
-      case "deployed-resource":
-        this.label = resource?.name;
-        this.description = resource?.type;
-        this.tooltip = `Deployed${resource?.tainted ? " • Tainted" : ""}`;
-        this.iconPath = resource?.tainted ? TAINTED : DEPLOYED;
-        break;
-      case "dormant-resource":
-        this.label = resource?.name;
-        this.description = resource?.type;
-        this.tooltip = "Not deployed";
-        this.iconPath = DORMANT;
-        break;
-      case "no-resources":
-        this.description = "(No resources found)";
-        break;
-      case "error":
-        this.description = "(Failed to load resources)";
-        break;
-    }
+    super("", vscode.TreeItemCollapsibleState.None);
 
     this.type = type;
-    this.contextValue = type;
     this.directory = directory;
     this.resource = resource;
+    this.topLevel = topLevel;
+    this.deployed = deployed;
+    this.module = module;
+    this.fullModule = fullModule;
+
+    if (type === "module") {
+      this.subModules = new Map();
+      this.resources = new Map();
+      this.contextValue = `${topLevel ? "top-" : ""}module`;
+      this.label = topLevel ? directory : module;
+      this.tooltip = topLevel ? directory : module;
+      this.iconPath = DIRECTORY;
+      this.description = topLevel ? "" : "module";
+      this.collapsibleState = topLevel
+        ? vscode.TreeItemCollapsibleState.Expanded
+        : vscode.TreeItemCollapsibleState.Collapsed;
+    } else if (type === "resource") {
+      this.contextValue = `${deployed ? "deployed-" : "dormant-"}resource`;
+      this.label = resource?.name;
+      this.description = resource?.type;
+      this.tooltip = `${deployed ? "Deployed" : "Not Deployed"}${
+        resource?.tainted ? " • Tainted" : ""
+      }`;
+      this.iconPath = resource?.tainted
+        ? TAINTED
+        : deployed
+        ? DEPLOYED
+        : DORMANT;
+    } else if (type === "no-resources") {
+      this.contextValue = "no-resources";
+      this.description = "(No resources found)";
+    } else if (type === "error") {
+      this.contextValue = "error";
+      this.description = "(Failed to load resources)";
+    }
+  }
+
+  getSubModule(module: string) {
+    if (!this.subModules?.has(module)) {
+      const subModule = new Item({
+        type: "module",
+        directory: this.directory,
+        module: module,
+        fullModule: `${this.topLevel ? "" : this.module + "."}module.${module}`,
+        topLevel: false,
+      });
+      this.subModules?.set(module, subModule);
+    }
+
+    return this.subModules?.get(module);
+  }
+
+  addResource(resource: Resource, deployed: boolean) {
+    this.resources?.set(
+      resource.address,
+      new Item({
+        type: "resource",
+        directory: this.directory,
+        resource,
+        topLevel: false,
+        deployed,
+      })
+    );
   }
 }
 
-export class TerrastateProvider
-  implements vscode.TreeDataProvider<TerrastateItem>
-{
-  private _onDidChangeTreeData: vscode.EventEmitter<TerrastateItem | void> =
-    new vscode.EventEmitter<TerrastateItem | void>();
-  readonly onDidChangeTreeData: vscode.Event<TerrastateItem | void | null> =
+export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
+  private _onDidChangeTreeData: vscode.EventEmitter<
+    Item | undefined | null | void
+  > = new vscode.EventEmitter<Item | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<Item | undefined | null | void> =
     this._onDidChangeTreeData.event;
 
-  private directories: Set<string> = new Set<string>();
-  private busy: Map<string, boolean> = new Map<string, boolean>();
-  private resources: Map<string, TerrastateItem[]> = new Map<
-    string,
-    TerrastateItem[]
-  >();
+  private topLevelModules: Map<string, Item> = new Map();
 
   constructor() {
-    const watcher = vscode.workspace.createFileSystemWatcher(
-      TF_GLOB,
-      false,
-      false,
-      false
-    );
-
-    const handleChange = ({ fsPath }: vscode.Uri) => {
-      const directory = path.dirname(fsPath);
-      if (this.directories.has(directory) && !this.busy.get(directory)) {
-        this.resources.delete(directory);
-        this._onDidChangeTreeData.fire();
-      }
-    };
-
-    watcher.onDidChange(handleChange);
-    watcher.onDidCreate(handleChange);
-    watcher.onDidDelete(handleChange);
-
-    setInterval(async () => {
-      if (await this.updateDirectories()) {
-        this._onDidChangeTreeData.fire();
-      }
-    }, 1000);
+    const watcher = vscode.workspace.createFileSystemWatcher(TF_GLOB);
+    watcher.onDidChange(({ fsPath }) => this.update(path.dirname(fsPath)));
+    watcher.onDidCreate(({ fsPath }) => this.update(path.dirname(fsPath)));
+    watcher.onDidDelete(({ fsPath }) => this.update(path.dirname(fsPath)));
+    setInterval(() => this.update(), 1000);
   }
 
-  private async updateDirectories(): Promise<boolean> {
-    const directories = new Set(
-      (await vscode.workspace.findFiles(TF_GLOB)).map(({ fsPath }) =>
-        path.dirname(fsPath)
-      )
-    );
-
-    if (
-      [...directories].every((directory) => this.directories.has(directory)) &&
-      [...this.directories].every((directory) => directories.has(directory))
-    ) {
-      return false;
-    }
-
-    // Removed directories
-    [...this.directories]
-      .filter((directory) => !directories.has(directory))
-      .map((directory) => {
-        this.resources.delete(directory);
-      });
-
-    this.directories = directories;
-
-    return true;
-  }
-
-  private async updateResources(directory: string): Promise<void> {
-    try {
-      const deployedResources = (await getDeployedResources(directory)).map(
-        (resource) =>
-          new TerrastateItem({
-            type: "deployed-resource",
-            directory,
-            resource,
-          })
-      );
-
-      const dormantResources = (await getResources(directory))
-        .filter((address) =>
-          deployedResources.every(
-            ({ resource }) => address !== resource?.address
-          )
-        )
-        .map(
-          (address) =>
-            new TerrastateItem({
-              type: "dormant-resource",
-              directory,
-              resource: {
-                address,
-                name: address.split(".")[1],
-                type: address.split(".")[0],
-              },
-            })
-        );
-
-      this.resources.set(directory, [
-        ...deployedResources,
-        ...dormantResources,
-      ]);
-
-      if (!this.resources.get(directory)?.length) {
-        this.resources.set(directory, [
-          new TerrastateItem({ type: "no-resources", directory }),
-        ]);
-      }
-    } catch (err) {
-      this.resources.set(directory, [
-        new TerrastateItem({ type: "error", directory }),
-      ]);
-    }
-  }
-
-  private setBusy(item: TerrastateItem, type?: ItemType): void {
-    this.busy.set(item.directory, true);
-    this.resources.get(item.directory)?.forEach((element) => {
-      if (
-        (!item.resource?.address ||
-          item.resource?.address === element.resource?.address) &&
-        (!type || element.type === type)
-      ) {
-        element.iconPath = LOADER;
-      }
-    });
-    this._onDidChangeTreeData.fire();
-  }
-
-  private setIdle(item: TerrastateItem): void {
-    this.busy.delete(item.directory);
-    this.resources.delete(item.directory);
-    this._onDidChangeTreeData.fire();
-  }
-
-  async getChildren(element?: TerrastateItem): Promise<TerrastateItem[]> {
-    if (element?.directory) {
-      if (this.resources.get(element.directory) === undefined) {
-        await this.updateResources(element.directory);
-      }
-      return this.resources.get(element.directory) ?? [];
-    }
-
-    return [...this.directories]
-      .sort()
-      .map((directory) => new TerrastateItem({ type: "directory", directory }));
-  }
-
-  getTreeItem(element: TerrastateItem): vscode.TreeItem {
+  getTreeItem(element: Item): vscode.TreeItem {
     return element;
   }
 
-  async refresh(item: TerrastateItem): Promise<void> {
-    try {
-      this.setBusy(item);
-      await refresh(item.directory);
-    } catch {
-    } finally {
-      this.setIdle(item);
+  getChildren(element?: Item): Item[] {
+    if (element) {
+      return [
+        ...[...(element.subModules?.keys() || [])]
+          .sort()
+          .map((key) => element.subModules?.get(key) as Item),
+        ...[...(element.resources?.keys() || [])]
+          .sort()
+          .map((key) => element.resources?.get(key) as Item),
+      ];
+    } else {
+      return [...this.topLevelModules.keys()]
+        .sort()
+        .map((key) => this.topLevelModules.get(key) as Item);
     }
   }
 
-  async init(item: TerrastateItem): Promise<void> {
-    try {
-      this.setBusy(item);
-      await init(item.directory);
-      vscode.window.showInformationMessage(
-        `Successfully initialized ${item.directory}`
+  private async update(directory?: string) {
+    if (directory) {
+      this.topLevelModules.set(
+        directory,
+        new Item({ type: "module", directory, topLevel: true })
       );
-    } catch {
-    } finally {
-      this.setIdle(item);
-    }
-  }
 
-  async validate(item: TerrastateItem): Promise<void> {
-    try {
-      this.setBusy(item);
-      await validate(item.directory);
-      vscode.window.showInformationMessage(
-        `Successfully validated ${item.directory}`
+      (await getResources(directory)).map((address) => {
+        const parts = address.split(".");
+        let parent = this.topLevelModules.get(directory);
+        if (parts.length > 2) {
+          parts
+            .slice(0, -2)
+            .filter((val, idx) => idx % 2 === 1)
+            .forEach((module) => (parent = parent?.getSubModule(module)));
+        }
+        parent?.addResource(
+          {
+            address,
+            type: parts[parts.length - 2],
+            name: parts[parts.length - 1],
+          },
+          false
+        );
+      });
+
+      (await getDeployedResources(directory)).map((resource) => {
+        const parts = resource.address.split(".");
+        let parent = this.topLevelModules.get(directory);
+        if (parts.length > 2) {
+          parts
+            .slice(0, -2)
+            .filter((val, idx) => idx % 2 === 1)
+            .forEach((module) => (parent = parent?.getSubModule(module)));
+        }
+        parent?.addResource(resource, true);
+      });
+
+      this._onDidChangeTreeData.fire();
+    } else {
+      const directories = new Set(
+        (await vscode.workspace.findFiles(TF_GLOB)).map(({ fsPath }) =>
+          path.dirname(fsPath)
+        )
       );
-    } catch {
-    } finally {
-      this.setIdle(item);
+
+      let updated = false;
+
+      [...this.topLevelModules.keys()].forEach((key) => {
+        if (!directories.has(key)) {
+          updated = true;
+          this.topLevelModules.delete(key);
+        }
+      });
+
+      await Promise.all(
+        [...directories].map(async (key) => {
+          if (!this.topLevelModules.has(key)) {
+            updated = true;
+            await this.update(key);
+          }
+        })
+      );
+
+      if (updated) this._onDidChangeTreeData.fire();
     }
   }
 
-  async apply(item: TerrastateItem): Promise<void> {
-    try {
-      this.setBusy(item);
-      await apply(item.directory, item.resource?.address);
-    } catch {
-    } finally {
-      this.setIdle(item);
+  async apply(element: Item): Promise<void> {
+    if (element.type === "module" && element.topLevel) {
+      apply(element.directory);
+    } else if (element.type === "module") {
+      apply(element.directory, element.fullModule);
+    } else if (element.type === "resource") {
+      apply(element.directory, element.resource?.address);
     }
   }
 
-  async destroy(item: TerrastateItem): Promise<void> {
-    try {
-      this.setBusy(item, "deployed-resource");
-      await destroy(item.directory, item.resource?.address);
-    } catch {
-    } finally {
-      this.setIdle(item);
+  async destroy(element: Item): Promise<void> {
+    if (element.type === "module" && element.topLevel) {
+      destroy(element.directory);
+    } else if (element.type === "module") {
+      destroy(element.directory, element.fullModule);
+    } else if (element.type === "resource") {
+      destroy(element.directory, element.resource?.address);
     }
   }
 
-  async taint(item: TerrastateItem): Promise<void> {
-    try {
-      this.setBusy(item);
-      await taint(item.directory, item.resource?.address || "");
-    } catch {
-    } finally {
-      this.setIdle(item);
-    }
+  async init(element: Item): Promise<void> {
+    init(element.directory);
   }
 
-  async untaint(item: TerrastateItem): Promise<void> {
-    try {
-      this.setBusy(item);
-      await untaint(item.directory, item.resource?.address || "");
-    } catch {
-    } finally {
-      this.setIdle(item);
-    }
+  async refresh(element: Item): Promise<void> {
+    refresh(element.directory);
   }
 
-  async sync(): Promise<void> {
-    await this.updateDirectories();
-    [...this.resources.keys()].forEach((directory) => {
-      if (!this.directories.has(directory) || !this.busy.get(directory)) {
-        this.resources.delete(directory);
-      }
-    });
-    this._onDidChangeTreeData.fire();
+  sync(): void {
+    this.topLevelModules.clear();
+  }
+
+  async taint(element: Item): Promise<void> {
+    taint(element.directory, element.resource?.address as string);
+  }
+
+  async untaint(element: Item): Promise<void> {
+    untaint(element.directory, element.resource?.address as string);
+  }
+
+  async validate(element: Item): Promise<void> {
+    validate(element.directory);
   }
 }

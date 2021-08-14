@@ -3,6 +3,11 @@ import * as vscode from "vscode";
 import * as semver from "semver";
 import { TERRAFORM_VERISON_RANGE } from "./constants";
 
+type Module = {
+  resources: Resource[];
+  child_modules?: Module[];
+};
+
 export type Resource = {
   address: string;
   name: string;
@@ -123,16 +128,25 @@ export async function getResources(directory: string): Promise<string[]> {
 export async function getDeployedResources(
   directory: string
 ): Promise<Resource[]> {
-  return (
-    JSON.parse(
-      await run(
-        terraformPath,
-        ["show", "-no-color", "-json"],
-        directory,
-        `Check if your directory is intialized with Terraform. An error occured when fetching resources for ${directory}`
-      )
-    )?.values?.root_module?.resources || []
+  const result = JSON.parse(
+    await run(
+      terraformPath,
+      ["show", "-no-color", "-json"],
+      directory,
+      `Check if your directory is intialized with Terraform. An error occured when fetching resources for ${directory}`
+    )
   );
+
+  let resources: Resource[] = [];
+  const handle = (module: Module) => {
+    if (!module) return;
+    resources = [...resources, ...(module?.resources || [])];
+    module.child_modules?.forEach(handle);
+  };
+
+  handle(result?.values?.root_module);
+
+  return resources;
 }
 
 export async function destroy(
