@@ -344,9 +344,6 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
         await destroy(element.directory, element.resource?.address);
       }
     } catch (err) {
-      console.log("hello");
-      console.log(err);
-
       let showOutput = false;
       if (element.type === "module" && element.topLevel) {
         showOutput =
