@@ -69,6 +69,10 @@
     },
     "commands": [
       {
+        "command": "terrastate.showOutput",
+        "title": "Terrastate: Show Output"
+      },
+      {
         "command": "terrastate.graph",
         "title": "Terrastate: Graph"
       },
