@@ -69,52 +69,56 @@
     },
     "commands": [
       {
+        "command": "terrastate.showOutput",
+        "title": "Terrastate: Show Output"
+      },
+      {
         "command": "terrastate.graph",
-        "title": "Graph"
+        "title": "Terrastate: Graph"
       },
       {
         "command": "terrastate.sync",
-        "title": "Sync",
+        "title": "Terrastate: Sync",
         "icon": "$(settings-sync-view-icon)"
       },
       {
         "command": "terrastate.refresh",
-        "title": "Refresh",
+        "title": "Terrastate: Refresh",
         "icon": "$(timeline-refresh)"
       },
       {
         "command": "terrastate.init",
-        "title": "Initialize"
+        "title": "Terrastate: Initialize"
       },
       {
         "command": "terrastate.validate",
-        "title": "Validate"
+        "title": "Terrastate: Validate"
       },
       {
         "command": "terrastate.apply",
-        "title": "Apply",
+        "title": "Terrastate: Apply",
         "icon": "$(cloud-upload)"
       },
       {
         "command": "terrastate.applyAll",
-        "title": "Apply All"
+        "title": "Terrastate: Apply All"
       },
       {
         "command": "terrastate.destroy",
-        "title": "Destroy",
+        "title": "Terrastate: Destroy",
         "icon": "$(stop-circle)"
       },
       {
         "command": "terrastate.destroyAll",
-        "title": "Destroy All"
+        "title": "Terrastate: Destroy All"
       },
       {
         "command": "terrastate.taint",
-        "title": "Taint"
+        "title": "Terrastate: Taint"
       },
       {
         "command": "terrastate.untaint",
-        "title": "Untaint"
+        "title": "Terrastate: Untaint"
       }
     ],
     "menus": {
@@ -176,6 +180,48 @@
         {
           "command": "terrastate.untaint",
           "when": "view == terrastate.terrastate && viewItem == deployed-resource"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "terrastate.graph",
+          "when": "false"
+        },
+        {
+          "command": "terrastate.refresh",
+          "when": "false"
+        },
+        {
+          "command": "terrastate.init",
+          "when": "false"
+        },
+        {
+          "command": "terrastate.validate",
+          "when": "false"
+        },
+        {
+          "command": "terrastate.apply",
+          "when": "false"
+        },
+        {
+          "command": "terrastate.applyAll",
+          "when": "false"
+        },
+        {
+          "command": "terrastate.destroy",
+          "when": "false"
+        },
+        {
+          "command": "terrastate.destroyAll",
+          "when": "false"
+        },
+        {
+          "command": "terrastate.taint",
+          "when": "false"
+        },
+        {
+          "command": "terrastate.untaint",
+          "when": "false"
         }
       ]
     }

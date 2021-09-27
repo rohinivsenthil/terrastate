@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { graph, setTerraformPath } from "./terraform";
+import { graph, outputChannel, setTerraformPath } from "./terraform";
 import { TerrastateProvider } from "./terrastateProvider";
 import { GraphProvider } from "./graphProvider";
 
@@ -91,6 +91,12 @@ export async function activate(
       "terrastate.sync",
       terrastateProvider.sync.bind(terrastateProvider)
     )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("terrastate.showOutput", () => {
+      outputChannel.show();
+    })
   );
 
   context.subscriptions.push(
