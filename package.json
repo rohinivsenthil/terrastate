@@ -24,6 +24,13 @@
     "Visualization",
     "Other"
   ],
+  "keywords": [
+    "terraform",
+    "hashicorp",
+    "infra",
+    "deploy",
+    "devops"
+  ],
   "activationEvents": [
     "onView:terrastate.terrastate"
   ],
