@@ -77,55 +77,67 @@
     "commands": [
       {
         "command": "terrastate.showOutput",
-        "title": "Terrastate: Show Output"
+        "title": "Show Output",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.graph",
-        "title": "Terrastate: Graph"
+        "title": "Graph",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.sync",
-        "title": "Terrastate: Sync",
-        "icon": "$(settings-sync-view-icon)"
+        "title": "Sync",
+        "icon": "$(settings-sync-view-icon)",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.refresh",
-        "title": "Terrastate: Refresh",
-        "icon": "$(timeline-refresh)"
+        "title": "Refresh",
+        "icon": "$(timeline-refresh)",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.init",
-        "title": "Terrastate: Initialize"
+        "title": "Initialize",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.validate",
-        "title": "Terrastate: Validate"
+        "title": "Validate",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.apply",
-        "title": "Terrastate: Apply",
-        "icon": "$(cloud-upload)"
+        "title": "Apply",
+        "icon": "$(cloud-upload)",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.applyAll",
-        "title": "Terrastate: Apply All"
+        "title": "Apply All",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.destroy",
-        "title": "Terrastate: Destroy",
-        "icon": "$(stop-circle)"
+        "title": "Destroy",
+        "icon": "$(stop-circle)",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.destroyAll",
-        "title": "Terrastate: Destroy All"
+        "title": "Destroy All",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.taint",
-        "title": "Terrastate: Taint"
+        "title": "Taint",
+        "category": "Terrastate"
       },
       {
         "command": "terrastate.untaint",
-        "title": "Terrastate: Untaint"
+        "title": "Untaint",
+        "category": "Terrastate"
       }
     ],
     "menus": {
