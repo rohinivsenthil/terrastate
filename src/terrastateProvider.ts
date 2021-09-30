@@ -177,6 +177,10 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     watcher.onDidChange(({ fsPath }) => this.update(path.dirname(fsPath)));
     watcher.onDidCreate(({ fsPath }) => this.update(path.dirname(fsPath)));
     watcher.onDidDelete(({ fsPath }) => this.update(path.dirname(fsPath)));
+  }
+
+  async initialize(): Promise<void> {
+    await this.update();
     setInterval(() => this.update(), 1000);
   }
 
@@ -210,6 +214,21 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
         .sort()
         .map((key) => this.topLevelModules.get(key) as Item);
     }
+  }
+
+  private async pickTopLevelModule(): Promise<Item | undefined> {
+    const choice = await vscode.window.showQuickPick(
+      [...this.topLevelModules.keys()].map((directory) => ({
+        label: path.dirname(
+          vscode.workspace.asRelativePath(path.join(directory, "tmp"), true)
+        ),
+        description: directory,
+      })) as vscode.QuickPickItem[]
+    );
+
+    return choice && choice.description
+      ? this.topLevelModules.get(choice.description)
+      : undefined;
   }
 
   private async update(directory?: string) {
@@ -401,7 +420,15 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     }
   }
 
-  async refresh(element: Item): Promise<void> {
+  async refresh(element?: Item): Promise<void> {
+    if (element === undefined) {
+      element = await this.pickTopLevelModule();
+    }
+
+    if (element === undefined) {
+      return;
+    }
+
     try {
       this.busyDirectories.add(element.directory);
       element.setLoading({ topLevel: true });

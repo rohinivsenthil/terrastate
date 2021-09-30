@@ -32,7 +32,8 @@
     "devops"
   ],
   "activationEvents": [
-    "onView:terrastate.terrastate"
+    "onView:terrastate.terrastate",
+    "onCommand:terrastate.refresh"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -204,10 +205,6 @@
       "commandPalette": [
         {
           "command": "terrastate.graph",
-          "when": "false"
-        },
-        {
-          "command": "terrastate.refresh",
           "when": "false"
         },
         {
