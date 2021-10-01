@@ -208,10 +208,6 @@
           "when": "false"
         },
         {
-          "command": "terrastate.init",
-          "when": "false"
-        },
-        {
           "command": "terrastate.validate",
           "when": "false"
         },

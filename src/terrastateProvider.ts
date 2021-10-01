@@ -400,7 +400,15 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     }
   }
 
-  async init(element: Item): Promise<void> {
+  async init(element?: Item): Promise<void> {
+    if (element === undefined) {
+      element = await this.pickTopLevelModule();
+    }
+
+    if (element === undefined) {
+      return;
+    }
+
     try {
       this.busyDirectories.add(element.directory);
       element.setLoading({ topLevel: true });
