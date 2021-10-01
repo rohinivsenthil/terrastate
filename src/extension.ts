@@ -11,6 +11,8 @@ export async function activate(
   }
 
   const terrastateProvider = new TerrastateProvider();
+  await terrastateProvider.initialize();
+
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider(
       "terrastate.terrastate",
