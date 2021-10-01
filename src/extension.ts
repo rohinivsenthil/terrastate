@@ -102,18 +102,30 @@ export async function activate(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("terrastate.graph", async (arg: string) => {
-      const panel = vscode.window.createWebviewPanel(
-        "Graph",
-        "Terrastate – Graph",
-        vscode.ViewColumn.One,
-        { enableScripts: true }
-      );
-      panel.iconPath = vscode.Uri.joinPath(
-        context.extensionUri,
-        "media/terrastate.png"
-      );
-      panel.webview.html = `
+    vscode.commands.registerCommand(
+      "terrastate.graph",
+      async (arg?: string) => {
+        if (arg === undefined) {
+          arg = (await terrastateProvider.pickTopLevelModule())?.directory;
+        }
+
+        if (arg === undefined) {
+          return;
+        }
+
+        const panel = vscode.window.createWebviewPanel(
+          "Graph",
+          "Terrastate – Graph",
+          vscode.ViewColumn.One,
+          { enableScripts: true }
+        );
+
+        panel.iconPath = vscode.Uri.joinPath(
+          context.extensionUri,
+          "media/terrastate.png"
+        );
+
+        panel.webview.html = `
       <!DOCTYPE html>
       <html lang="en">
         <head>
@@ -130,6 +142,7 @@ export async function activate(
         </body>
       </html>
     `;
-    })
+      }
+    )
   );
 }

@@ -220,7 +220,7 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
     }
   }
 
-  private async pickTopLevelModule(): Promise<Item | undefined> {
+  async pickTopLevelModule(): Promise<Item | undefined> {
     const choice = await vscode.window.showQuickPick(
       [...this.topLevelModules.keys()].map((directory) => ({
         label: path.dirname(
