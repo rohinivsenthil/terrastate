@@ -39,25 +39,34 @@ export class GraphProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
   }
 
   async getChildren(): Promise<vscode.TreeItem[]> {
-    return [...this.directories].sort().map((directory) => {
+    if (this.directories.size) {
+      return [...this.directories].sort().map((directory) => {
+        const item = new vscode.TreeItem(
+          path.dirname(
+            vscode.workspace.asRelativePath(
+              path.join(directory || "", "tmp"),
+              true
+            )
+          ),
+          vscode.TreeItemCollapsibleState.None
+        );
+        item.iconPath = GRAPH;
+        item.command = {
+          command: "terrastate.graph",
+          title: "Terraform Graph",
+          tooltip: "Terraform Graph",
+          arguments: [directory],
+        };
+        return item;
+      });
+    } else {
       const item = new vscode.TreeItem(
-        path.dirname(
-          vscode.workspace.asRelativePath(
-            path.join(directory || "", "tmp"),
-            true
-          )
-        ),
+        "",
         vscode.TreeItemCollapsibleState.None
       );
-      item.iconPath = GRAPH;
-      item.command = {
-        command: "terrastate.graph",
-        title: "Terraform Graph",
-        tooltip: "Terraform Graph",
-        arguments: [directory],
-      };
-      return item;
-    });
+      item.description = "(No resources found)";
+      return [item];
+    }
   }
 
   getTreeItem(element: vscode.TreeItem): vscode.TreeItem {

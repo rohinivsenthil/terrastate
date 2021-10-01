@@ -205,10 +205,14 @@ export class TerrastateProvider implements vscode.TreeDataProvider<Item> {
               topLevel: false,
             }),
           ];
-    } else {
+    } else if (this.topLevelModules.size) {
       return [...this.topLevelModules.keys()]
         .sort()
         .map((key) => this.topLevelModules.get(key) as Item);
+    } else {
+      return [
+        new Item({ type: "no-resources", directory: "", topLevel: true }),
+      ];
     }
   }
 
