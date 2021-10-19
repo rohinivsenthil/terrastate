@@ -2,6 +2,11 @@
 
 All notable changes to the "terrastate" extension will be documented in this file.
 
+
+### 1.1.1
+
+- Add terreform commands to command palette 
+
 ### 1.1.0
 
 - Support Terraform modules
