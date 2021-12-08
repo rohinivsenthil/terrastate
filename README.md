@@ -90,6 +90,7 @@ Contributions are always welcome!
 
 ## Related
 
+- Presented at [HashiConf Global 2021](https://hashiconf.com/global/) – Lightning Talk 
 - [MIT License](<https://github.com/rohinivsenthil/terrastate/blob/master/LICENSE![terrastate](https://user-images.githubusercontent.com/42040329/129020767-85f8e868-48d1-4dd4-92b4-35026c706f40.gif)>)
 <!-- - Read the [launch blog]
 - Featured #11 Product of the day on
